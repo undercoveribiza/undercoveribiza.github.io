@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Undercover op Ibiza – Klasspel</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --sun: #FFB830;
+  --coral: #FF5757;
+  --sea: #00B4D8;
+  --sand: #FFF3D6;
+  --deep: #0A1628;
+  --card: #ffffff;
+  --text: #1a1a2e;
+  --muted: #7a7a99;
+  --green: #06d6a0;
+  --pink: #ff6b9d;
+  --shadow: 0 8px 32px rgba(0,0,0,0.13);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family:'Nunito',sans-serif;
+  background: linear-gradient(160deg,#ffe8b0 0%,#ffd6a0 40%,#b3e8f7 100%);
+  min-height:100vh;
+  color:var(--text);
+}
+
+/* ===== SCREENS ===== */
+.screen { display:none; min-height:100vh; }
+.screen.active { display:flex; flex-direction:column; }
+
+/* ===== ROLE SELECTION SCREEN ===== */
+#roleScreen {
+  align-items:center;
+  padding:20px 16px 40px;
+}
+.role-header {
+  text-align:center;
+  margin-bottom:24px;
+}
+.role-header h1 {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(28px,7vw,48px);
+  color:var(--deep);
+  line-height:1.1;
+}
+.role-header h1 span { color:var(--coral); }
+.role-header p { color:var(--muted); font-size:15px; margin-top:6px; }
+.sun-deco {
+  font-size:48px;
+  display:block;
+  margin-bottom:4px;
+  animation: spin 20s linear infinite;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+
+.role-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  gap:12px;
+  width:100%;
+  max-width:800px;
+}
+.role-card {
+  background:white;
+  border-radius:16px;
+  padding:14px 10px;
+  text-align:center;
+  cursor:pointer;
+  border:2px solid transparent;
+  box-shadow:var(--shadow);
+  transition:all .2s;
+  position:relative;
+  overflow:hidden;
+}
+.role-card::before {
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:4px;
+  background:var(--role-color,var(--sea));
+}
+.role-card:hover { transform:translateY(-3px); border-color:var(--role-color,var(--sea)); }
+.role-card.taken { opacity:.45; pointer-events:none; }
+.role-card.taken::after {
+  content:'Bezet';
+  position:absolute;
+  inset:0;
+  background:rgba(255,255,255,.7);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:13px;color:var(--muted);
+  border-radius:14px;
+}
+.role-card .role-emoji { font-size:30px; margin-bottom:6px; display:block; }
+.role-card .role-name { font-weight:800; font-size:13px; color:var(--text); line-height:1.2; }
+.role-card .role-type { font-size:11px; color:var(--muted); margin-top:2px; }
+
+.role-group-label {
+  width:100%;
+  font-family:'Playfair Display',serif;
+  font-size:16px;
+  color:var(--deep);
+  margin:16px 0 4px;
+  padding-left:4px;
+  border-left:3px solid var(--coral);
+  padding-left:8px;
+  grid-column:1/-1;
+}
+
+/* ===== WAITING SCREEN ===== */
+#waitScreen {
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:40px 20px;
+}
+.wait-card {
+  background:white;
+  border-radius:24px;
+  padding:40px 32px;
+  max-width:380px;
+  box-shadow:var(--shadow);
+}
+.wait-card h2 { font-family:'Playfair Display',serif; font-size:28px; margin:16px 0 8px; }
+.wait-card p { color:var(--muted); font-size:15px; line-height:1.6; }
+.char-badge {
+  display:inline-block;
+  background:linear-gradient(135deg,var(--sun),var(--coral));
+  color:white;
+  border-radius:12px;
+  padding:8px 20px;
+  font-weight:800;
+  font-size:18px;
+  margin-top:16px;
+}
+.pulse-dot {
+  width:12px;height:12px;
+  background:var(--green);
+  border-radius:50%;
+  display:inline-block;
+  animation:pulse 1.4s ease-in-out infinite;
+  margin-right:6px;
+}
+@keyframes pulse {
+  0%,100%{opacity:1;transform:scale(1);}
+  50%{opacity:.4;transform:scale(.7);}
+}
+
+/* ===== HOST SCREEN ===== */
+#hostScreen {
+  padding:20px;
+}
+.host-header {
+  background:var(--deep);
+  color:white;
+  border-radius:16px;
+  padding:16px 20px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:16px;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.host-header h1 { font-family:'Playfair Display',serif; font-size:22px; }
+.host-header .scene-badge {
+  background:var(--sun);
+  color:var(--deep);
+  border-radius:8px;
+  padding:4px 14px;
+  font-weight:800;
+  font-size:14px;
+}
+.host-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+  margin-bottom:16px;
+}
+@media(max-width:600px){ .host-grid{grid-template-columns:1fr;} }
+
+.host-card {
+  background:white;
+  border-radius:16px;
+  padding:18px;
+  box-shadow:var(--shadow);
+}
+.host-card h3 { font-family:'Playfair Display',serif; font-size:17px; margin-bottom:10px; }
+
+.player-pill {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  background:var(--sand);
+  border-radius:20px;
+  padding:4px 10px;
+  font-size:12px;
+  font-weight:700;
+  margin:3px;
+}
+.player-pill .dot { width:8px;height:8px;border-radius:50%;background:var(--green); }
+.player-pill .dot.wait { background:var(--sun); }
+
+.scene-nav {
+  display:flex;
+  gap:10px;
+  margin-top:16px;
+  flex-wrap:wrap;
+}
+.btn {
+  padding:12px 22px;
+  border:none;
+  border-radius:12px;
+  font-family:'Nunito',sans-serif;
+  font-weight:800;
+  font-size:15px;
+  cursor:pointer;
+  transition:all .2s;
+}
+.btn:hover { transform:translateY(-2px); }
+.btn-primary { background:var(--coral); color:white; }
+.btn-secondary { background:var(--deep); color:white; }
+.btn-ghost { background:rgba(0,0,0,.07); color:var(--text); }
+.btn:active { transform:scale(.96); }
+
+.scene-thumb {
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-top:6px;
+}
+.sthumb {
+  width:28px;height:28px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:800;cursor:pointer;
+  background:rgba(0,0,0,.08);
+  transition:.15s;
+}
+.sthumb.active { background:var(--coral);color:white; }
+.sthumb.done { background:var(--green);color:white; }
+
+/* ===== SCENE SCREEN (PLAYER) ===== */
+#sceneScreen {
+  padding:16px;
+  align-items:center;
+}
+.scene-wrap { max-width:480px; width:100%; }
+
+.scene-top {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:14px;
+}
+.scene-top .my-role {
+  background:white;
+  border-radius:10px;
+  padding:6px 14px;
+  font-weight:800;
+  font-size:13px;
+  box-shadow:0 2px 8px rgba(0,0,0,.1);
+}
+.scene-top .scene-num {
+  font-size:13px;color:var(--muted);
+}
+
+.scene-card {
+  background:white;
+  border-radius:20px;
+  padding:22px;
+  box-shadow:var(--shadow);
+  margin-bottom:14px;
+}
+.scene-card .location {
+  font-size:12px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--sea);
+  font-weight:700;
+  margin-bottom:8px;
+}
+.scene-card h2 {
+  font-family:'Playfair Display',serif;
+  font-size:22px;
+  margin-bottom:10px;
+  color:var(--deep);
+}
+.scene-card .story-text {
+  font-size:15px;
+  line-height:1.7;
+  color:#333;
+}
+.scene-card .story-text .highlight {
+  background:linear-gradient(0deg,rgba(255,184,48,.35) 0%,rgba(255,184,48,.35) 100%);
+  border-radius:3px;
+  padding:0 3px;
+  font-weight:700;
+}
+
+/* MY ROLE BOX */
+.my-task-card {
+  background:linear-gradient(135deg,var(--deep) 0%,#1a2f5a 100%);
+  color:white;
+  border-radius:20px;
+  padding:20px;
+  margin-bottom:14px;
+}
+.my-task-card .task-label {
+  font-size:11px;letter-spacing:2px;text-transform:uppercase;
+  color:rgba(255,255,255,.5);margin-bottom:6px;
+}
+.my-task-card h3 { font-size:18px;font-weight:800;margin-bottom:8px; }
+.my-task-card p { font-size:14px;line-height:1.6;color:rgba(255,255,255,.85); }
+.my-task-card .task-tip {
+  margin-top:12px;
+  background:rgba(255,255,255,.1);
+  border-radius:10px;
+  padding:10px 14px;
+  font-size:13px;
+  color:rgba(255,255,255,.7);
+}
+
+/* CHOICES */
+.choices { display:flex;flex-direction:column;gap:10px; }
+.choice-btn {
+  background:white;
+  border:2px solid #e8e8f0;
+  border-radius:14px;
+  padding:14px 16px;
+  text-align:left;
+  cursor:pointer;
+  font-family:'Nunito',sans-serif;
+  font-size:14px;
+  font-weight:700;
+  color:var(--text);
+  transition:all .2s;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.choice-btn:hover { border-color:var(--coral);background:#fff8f7;transform:translateX(4px); }
+.choice-btn .choice-emoji { font-size:20px;flex-shrink:0; }
+
+/* VOTE */
+.vote-section { margin-top:8px; }
+.vote-header { font-weight:800;font-size:16px;margin-bottom:8px;color:var(--deep); }
+.vote-options { display:flex;flex-direction:column;gap:8px; }
+.vote-option {
+  background:white;
+  border:2px solid #e8e8f0;
+  border-radius:12px;
+  padding:12px 16px;
+  cursor:pointer;
+  font-weight:700;
+  font-size:14px;
+  transition:.2s;
+  display:flex;align-items:center;gap:10px;
+}
+.vote-option:hover { border-color:var(--coral); }
+.vote-option.voted { border-color:var(--green);background:#f0fff9; }
+.vote-count { margin-left:auto;font-size:12px;color:var(--muted); }
+
+/* OUTCOME */
+.outcome-card {
+  background:linear-gradient(135deg,#FFB830,#FF5757);
+  color:white;
+  border-radius:20px;
+  padding:24px;
+  text-align:center;
+  margin-bottom:14px;
+}
+.outcome-card .big-emoji { font-size:56px;display:block;margin-bottom:10px; }
+.outcome-card h2 { font-family:'Playfair Display',serif;font-size:26px;margin-bottom:8px; }
+.outcome-card p { font-size:15px;opacity:.9;line-height:1.6; }
+
+/* HOST overlay info */
+.host-scene-detail {
+  background:white;
+  border-radius:16px;
+  padding:18px;
+  box-shadow:var(--shadow);
+  margin-bottom:14px;
+}
+.host-scene-detail h3 { font-family:'Playfair Display',serif;font-size:18px;margin-bottom:6px; }
+.host-scene-detail p { font-size:14px;color:var(--muted);line-height:1.6; }
+.cast-row { display:flex;flex-wrap:wrap;gap:6px;margin-top:8px; }
+
+.votes-tally {
+  background:var(--sand);
+  border-radius:12px;
+  padding:14px;
+  margin-top:10px;
+}
+.tally-row {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:5px 0;
+  border-bottom:1px solid rgba(0,0,0,.06);
+  font-size:14px;
+}
+.tally-bar {
+  height:6px;
+  border-radius:3px;
+  background:var(--coral);
+  margin-top:3px;
+  transition:width .4s;
+}
+
+/* STORY END */
+.end-screen {
+  text-align:center;
+  padding:40px 20px;
+  align-items:center;
+  justify-content:center;
+}
+.end-card {
+  background:white;
+  border-radius:24px;
+  padding:40px 28px;
+  max-width:420px;
+  box-shadow:var(--shadow);
+}
+.end-card h1 { font-family:'Playfair Display',serif;font-size:32px;margin-bottom:12px;color:var(--deep); }
+.end-card .finale-emoji { font-size:64px;display:block;margin-bottom:16px; }
+.end-card p { font-size:16px;color:var(--muted);line-height:1.6;margin-bottom:20px; }
+
+/* TOAST */
+.toast {
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--deep);color:white;
+  padding:12px 24px;border-radius:40px;font-weight:700;font-size:14px;
+  transition:transform .3s;z-index:999;white-space:nowrap;
+}
+.toast.show { transform:translateX(-50%) translateY(0); }
+
+/* CODE INPUT */
+.code-section {
+  background:white;
+  border-radius:16px;
+  padding:20px;
+  text-align:center;
+  box-shadow:var(--shadow);
+  margin-top:16px;
+  max-width:340px;
+  width:100%;
+}
+.code-section h3 { font-size:16px;font-weight:800;margin-bottom:6px; }
+.code-section p { font-size:13px;color:var(--muted);margin-bottom:12px; }
+.code-input {
+  width:100%;padding:12px;
+  border:2px solid #e8e8f0;border-radius:10px;
+  font-size:18px;font-family:'Nunito',sans-serif;font-weight:800;
+  text-align:center;letter-spacing:4px;text-transform:uppercase;outline:none;
+  transition:.2s;
+}
+.code-input:focus { border-color:var(--coral); }
+
+/* HOST CODE DISPLAY */
+.big-code {
+  font-family:'Playfair Display',serif;
+  font-size:42px;
+  letter-spacing:8px;
+  color:var(--coral);
+  font-weight:900;
+  text-align:center;
+  margin:10px 0;
+}
+
+/* IBIZA DECO */
+.ibiza-wave {
+  position:fixed;bottom:0;left:0;right:0;
+  height:80px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 80'%3E%3Cpath fill='%2300B4D8' fill-opacity='0.15' d='M0,40 C360,80 720,0 1080,40 C1260,60 1360,30 1440,40 L1440,80 L0,80 Z'/%3E%3C/svg%3E") no-repeat bottom;
+  pointer-events:none;z-index:0;
+}
+</style>
+</head>
+<body>
+
+<!-- ===== SCREEN: ROLE SELECTION ===== -->
+<div class="screen active" id="roleScreen">
+  <div class="role-header">
+    <span class="sun-deco">☀️</span>
+    <h1>Undercover<br><span>op Ibiza</span></h1>
+    <p>Kies jouw personage om mee te spelen!</p>
+  </div>
+  <div class="role-grid" id="roleGrid"></div>
+
+  <div class="code-section" style="margin-top:24px">
+    <h3>🎬 Ben je de leerkracht?</h3>
+    <p>Start het spel als host en bestuur de scènes</p>
+    <button class="btn btn-secondary" onclick="becomeHost()" style="width:100%;margin-top:4px">🎭 Host worden</button>
+  </div>
+
+  <div class="code-section">
+    <h3>📱 Spel al gestart?</h3>
+    <p>Voer de gamecode in van de host</p>
+    <input class="code-input" id="joinCodeInput" placeholder="CODE" maxlength="4" oninput="this.value=this.value.toUpperCase()">
+    <button class="btn btn-primary" onclick="joinGame()" style="width:100%;margin-top:10px">Verbinden →</button>
+  </div>
+</div>
+
+<!-- ===== SCREEN: WAITING ===== -->
+<div class="screen" id="waitScreen">
+  <div class="wait-card">
+    <span style="font-size:48px">⏳</span>
+    <h2>Wachten op<br>de leerkracht...</h2>
+    <p>Jij speelt als:</p>
+    <div class="char-badge" id="myCharBadge">–</div>
+    <p style="margin-top:16px"><span class="pulse-dot"></span>Zodra het spel begint krijg jij jouw opdracht!</p>
+  </div>
+</div>
+
+<!-- ===== SCREEN: HOST ===== -->
+<div class="screen" id="hostScreen">
+  <div class="host-header">
+    <div>
+      <h1>🎬 Host – Undercover op Ibiza</h1>
+      <div style="font-size:13px;color:rgba(255,255,255,.6);margin-top:3px">Gamecode: <strong id="hostCodeDisplay" style="color:var(--sun);letter-spacing:3px">????</strong></div>
+    </div>
+    <div class="scene-badge" id="hostSceneBadge">Scène 1</div>
+  </div>
+
+  <div class="host-grid">
+    <div class="host-card">
+      <h3>👥 Verbonden spelers (<span id="connectedCount">0</span>)</h3>
+      <div id="connectedList"></div>
+    </div>
+    <div class="host-card">
+      <h3>📍 Scèneoverzicht</h3>
+      <div class="scene-thumb" id="sceneThumbs"></div>
+    </div>
+  </div>
+
+  <div class="host-scene-detail" id="hostSceneDetail">
+    <h3 id="hostSceneTitle">–</h3>
+    <p id="hostSceneDesc">–</p>
+    <div class="cast-row" id="hostSceneCast"></div>
+  </div>
+
+  <div class="host-card" style="margin-bottom:14px">
+    <h3>🗳️ Stemmen live</h3>
+    <div class="votes-tally" id="votesTally"><p style="color:var(--muted);font-size:14px">Nog geen stemmen</p></div>
+  </div>
+
+  <div class="scene-nav">
+    <button class="btn btn-ghost" onclick="hostPrevScene()">← Vorige</button>
+    <button class="btn btn-primary" onclick="hostNextScene()">Volgende scène →</button>
+    <button class="btn btn-secondary" onclick="hostRevealVotes()">🗳️ Stemmen onthullen</button>
+  </div>
+</div>
+
+<!-- ===== SCREEN: SCENE (PLAYER) ===== -->
+<div class="screen" id="sceneScreen">
+  <div class="scene-wrap">
+    <div class="scene-top">
+      <div class="my-role" id="myRoleTop">–</div>
+      <div class="scene-num" id="mySceneNum">Scène 1</div>
+    </div>
+
+    <div class="scene-card" id="sceneCard">
+      <div class="location" id="sceneLocation">–</div>
+      <h2 id="sceneTitle">–</h2>
+      <div class="story-text" id="sceneText">–</div>
+    </div>
+
+    <div class="my-task-card" id="myTaskCard">
+      <div class="task-label">Jouw opdracht</div>
+      <h3 id="myTaskTitle">–</h3>
+      <p id="myTaskDesc">–</p>
+      <div class="task-tip" id="myTaskTip"></div>
+    </div>
+
+    <div class="choices" id="choicesArea"></div>
+    <div class="vote-section" id="voteArea" style="display:none">
+      <div class="vote-header">🗳️ Stem: wie gedraagt zich het vreemdst?</div>
+      <div class="vote-options" id="voteOptions"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCREEN: END ===== -->
+<div class="screen end-screen" id="endScreen">
+  <div class="end-card">
+    <span class="finale-emoji" id="endEmoji">🎭</span>
+    <h1 id="endTitle">Einde!</h1>
+    <p id="endText">–</p>
+    <button class="btn btn-primary" onclick="resetGame()" style="width:100%">🔁 Opnieuw spelen</button>
+  </div>
+</div>
+
+<div class="ibiza-wave"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+//  DATA
+// ============================================================
+
+const ROLES = [
+  // HOOFDROLLEN
+  { id:'ger', name:'Ger Brokken', emoji:'👨', type:'Hoofdrol', color:'#FF5757',
+    desc:'Vrolijke, optimistische vader. Hij heeft altijd een plan, ook al gaat alles mis.',
+    tasks: {
+      1:'Jij presenteert je gezin vol vertrouwen bij Grijp die Prijs!. Doe extra enthousiast!',
+      2:'Jullie hebben geen kamer! Verzin ter plekke een plan — doe alsof je personeel bent.',
+      3:'Ger gaat undercover als Koning Lomp. Blijf volledig in karakter!',
+      4:'Nu is het tijd om de waarheid te onthullen. Zorg dat iedereen luistert naar jouw speech.'
+    }
+  },
+  { id:'ellen', name:'Ellen Brokken', emoji:'👩', type:'Hoofdrol', color:'#FF5757',
+    desc:'Lieve, zenuwachtige vrouw van Ger. Ze gelooft in hem, maar wordt nerveus van alle plannen.',
+    tasks: {
+      1:'Doe superenthousiast bij de quiz, maar laat toch zien dat je een beetje nerveus bent.',
+      2:'Ga mee in het plan van Ger, maar fluister de anderen toe dat je dit maar eng vindt.',
+      3:'Jij speelt de vrouw van Koning Lomp. Doe chic en deftig!',
+      4:'Zeg hardop dat je het liefst gewoon naar huis wil. Opgelucht ademhalen!'
+    }
+  },
+  { id:'puk', name:'Puk Brokken', emoji:'🧒', type:'Hoofdrol', color:'#FF5757',
+    desc:'Nuchter tienermeisje. Stopwoordje: "Ik ga stuk." Ze gelooft nooit in de plannen van papa.',
+    tasks: {
+      1:'Zeg "Ik ga stuk" zo vaak mogelijk, maar zónder emotie. Zo verveeld mogelijk.',
+      2:'Rol je ogen bij elk plan van Ger. Maar doe toch mee — je hebt toch niets beters te doen.',
+      3:'Pas als je hoort dat Nick Slick achter alles zit, raak je écht boos. Laat dat zien!',
+      4:'Jij bent degene die Nick Slick achternarent. Speel het dramatisch!'
+    }
+  },
+  { id:'rosa', name:'Rosa', emoji:'🌹', type:'Hoofdrol', color:'#ff6b9d',
+    desc:'Eigenaresse van resort De Roze Flamingo. Opmerkzaam, rechtvaardig, en moeilijk voor de gek te houden.',
+    tasks: {
+      1:'Jij bent er nog niet in scène 1. Bereid je voor op een grote entree!',
+      2:'Jij hebt de Brokkens snel door. Stel ze vriendelijk maar direct aan de kaak.',
+      3:'Jij vermoedt nu wie echte undercovers zijn. Observeer iedereen goed — zwijg en kijk.',
+      4:'Onthul wie je allemaal al had doorzien. Doe dat met een glimlach!'
+    }
+  },
+  { id:'manuel', name:'Manuel', emoji:'🛎️', type:'Hoofdrol', color:'#00B4D8',
+    desc:'Receptionist van De Roze Flamingo. Serieus en tactloos — hij roept geheimen luid door de microfoon.',
+    tasks: {
+      1:'Jij bent er nog niet. Oefen je microfoonaankondiging voor scène 2.',
+      2:'Kondigt alle gasten aan via de microfoon — ook geheime gasten. Zo hard en officieel mogelijk!',
+      3:'Jij weet niet meer wie nu wie is. Kondigt de verkeerde mensen aan. Speel dit serieus!',
+      4:'Kondig de ware identiteit van iedereen plechtig aan via de microfoon.'
+    }
+  },
+  { id:'agentO', name:'Agent O', emoji:'🕵️', type:'Hoofdrol', color:'#9b5de5',
+    desc:'Mysterieuze undercoveragent. Elke keer dat iemand "O" zegt, denkt hij dat hij geroepen wordt.',
+    tasks: {
+      1:'Jij bent er nog niet. Bedenk hoe je zo mysterieus mogelijk kunt binnenkomen.',
+      2:'Kom mysterieus binnen. Doe alsof je een echte beveiligingscheck doet.',
+      3:'Reageer ELKE keer dat iemand "O" zegt — kijk op alsof je geroepen wordt!',
+      4:'Onthul eindelijk waarom je echt op Ibiza was. Zorg voor drama!'
+    }
+  },
+  // GROTE ROLLEN
+  { id:'nickJack', name:'Nick Slick / Jack Turbo', emoji:'🎤', type:'Grote rol', color:'#FFB830',
+    desc:'Presentator Nick Slick én kapitein Jack Turbo in één. Energiek als Nick, vol van zichzelf als Jack.',
+    tasks: {
+      1:'Presenteer Grijp die Prijs! met maximale energie. Je BENT de show.',
+      2:'Jij bent nu Jack Turbo. Doe je charme aan — niemand mag doorhebben wie je echt bent.',
+      3:'Je begint te zweten. Familie Brokken verdacht jou al. Doe extra nonchalant.',
+      4:'Je bent door de mand gevallen! Overdreven excuses zijn de enige optie.'
+    }
+  },
+  { id:'jasmijn', name:'Jasmijn', emoji:'💆', type:'Grote rol', color:'#06d6a0',
+    desc:'Medewerker van de spa. Houdt van roddelpraat en een sappig nieuwtje.',
+    tasks: {
+      1:'Jij bent er nog niet. Roddel alvast met Jasmina over de andere personages.',
+      2:'Verwelkom gasten in de spa — fluister ondertussen roddelss in iemands oor.',
+      3:'Jullie zagen Ger en Ellen zich verstoppen! Roddel hierover met Jasmina zo snel mogelijk.',
+      4:'Vertel de hele zaal het laatste spa-roddeltje over wat je allemaal hebt gehoord.'
+    }
+  },
+  { id:'jasmina', name:'Jasmina', emoji:'🧖', type:'Grote rol', color:'#06d6a0',
+    desc:'Medewerker van de spa. Beste vriendin van Jasmijn — samen zijn ze niet te stoppen.',
+    tasks: {
+      1:'Jij bent er nog niet. Oefen je beste roddelstemmetje.',
+      2:'Help gasten ontspannen in de spa — maar je hoort stiekem dingen die je niet had moeten horen.',
+      3:'Vertel aan Jasmijn wat je hebt gehoord over Koning Lomp. Heel zachtjes, maar tóch hoorbaar.',
+      4:'Geef je beste reactie op de onthulling. Zo dramatisch mogelijk!'
+    }
+  },
+  { id:'koningLomp', name:'Koning Lomp', emoji:'👑', type:'Grote rol', color:'#FFB830',
+    desc:'De echte koning van Trammeland. Lomp, veeleisend, en boos als iemand hem niet gelooft.',
+    tasks: {
+      1:'Jij bent er nog niet. Bedenk de lompste manier om een kamer te eisen.',
+      2:'Jij bent er nog niet. Wacht in de coulissen en ga alvast lopen alsof je een koning bent.',
+      3:'Kom WOEDEND binnen: er loopt een nep-Lomp rond! Eis dat iedereen luistert.',
+      4:'Eis een officiële verontschuldiging. Overdreven waardigheid is het doel!'
+    }
+  },
+  { id:'millennia', name:'Millennia', emoji:'👸', type:'Grote rol', color:'#FFB830',
+    desc:'Koningin, vrouw van Lomp. Statig, chic, en kan koninklijk zwaaien als de beste.',
+    tasks: {
+      1:'Jij bent er nog niet. Oefen je koninklijke zwaai en je deftigste blik.',
+      2:'Jij bent er nog niet. Blijf waardig en kalm — koninginnen haasten zich niet.',
+      3:'Loop naast Koning Lomp en kijk met koninklijke verontwaardiging naar de nep-koningin.',
+      4:'Zwaai chic naar het publiek en laat zien dat je het allang wist.'
+    }
+  },
+  { id:'camilla', name:'Camilla Rustenburg', emoji:'🧘', type:'Grote rol', color:'#f72585',
+    desc:'Zus op vakantie voor rust. Wil absoluut geen Ibiza-feestgedoe — totdat ze een bananenboot ziet.',
+    tasks: {
+      1:'Jij bent er nog niet. Sla je armen over elkaar en kijk verveeld.',
+      2:'Ga extreem gefrustreerd reageren op elk lawaai. Jij wilt RUST.',
+      3:'Ontdek de bananenboot. Laat de overstap van saai naar superenthousiast heel snel gaan!',
+      4:'Vertel iedereen dat dit je beste vakantie ooit was. Alsof je er nooit tegen was geweest.'
+    }
+  },
+  { id:'ruth', name:'Ruth Rustenburg', emoji:'🧘', type:'Grote rol', color:'#f72585',
+    desc:'Zusje van Camilla. Net zo rustzuchtig — maar eigenlijk wil ze stiekem ook feesten.',
+    tasks: {
+      1:'Jij bent er nog niet. Zucht heel dramatisch.',
+      2:'Klaag samen met Camilla over alles wat te luidruchtig is.',
+      3:'Jij bent stiekem de eerste die begint te dansen als niemand kijkt.',
+      4:'Geef toe dat je het feest wél geweldig vond. Doe een beetje verlegen.'
+    }
+  },
+  { id:'fanny', name:'Fanny', emoji:'🪩', type:'Grote rol', color:'#7b2d8b',
+    desc:'Party girl met een foute party-thema. Wil feesten — en wél op haar eigen manier.',
+    tasks: {
+      1:'Jij bent er nog niet. Oefen je meest foute dansmove.',
+      2:'Kom vol energie het resort binnen. Jij bent hier om te feesten!',
+      3:'Probeer Camilla en Ruth mee te krijgen naar het feest. Overdrijf je enthousiasme.',
+      4:'Leid de eindefinale dans. Zorg dat iedereen meedoet!'
+    }
+  },
+  { id:'roxy', name:'Roxy', emoji:'🕺', type:'Grote rol', color:'#7b2d8b',
+    desc:'Party girl — maar dan seventies stijl. Gaat helemaal los als er disco klinkt.',
+    tasks: {
+      1:'Jij bent er nog niet.',
+      2:'Maak een overdreven seventies entree. Wijs iedereen op je stijl.',
+      3:'Probeer de Rustenburg-zussen te overtuigen dat seventies disco de beste muziek is.',
+      4:'Dans mee in het slotfeest en roep: "Disco never dies!"'
+    }
+  },
+  { id:'indy', name:'Indy', emoji:'🌺', type:'Grote rol', color:'#7b2d8b',
+    desc:'Party girl met een tropisch thema. Denkt dat Ibiza eigenlijk Hawaii moet zijn.',
+    tasks: {
+      1:'Jij bent er nog niet.',
+      2:'Kom binnen met een tropische vibe. Doe alsof je een cocktail drinkt die er niet is.',
+      3:'Probeer Manuel te overtuigen de lobby te versieren met palmbomen.',
+      4:'Sla je arm om iemand heen en roep: "Dit is het leven!"'
+    }
+  },
+  { id:'jenny', name:'Jenny', emoji:'🧡', type:'Grote rol', color:'#7b2d8b',
+    desc:'Party girl met een Hollandse avond-thema. Wil bitterballen en kroegmuziek op Ibiza.',
+    tasks: {
+      1:'Jij bent er nog niet.',
+      2:'Vraag Manuel of er bitterballen zijn. Serieus.',
+      3:'Draag aan de sfeer bij door luid "Hé hé, ik lust er wel twee!" te roepen.',
+      4:'Schreeuw "Proost!" en sla iemand op de schouder.'
+    }
+  },
+  { id:'ivy', name:'Ivy', emoji:'🤍', type:'Grote rol', color:'#7b2d8b',
+    desc:'Stijlvolle party girl in Ibiza-wit. Minimalisme is haar ding.',
+    tasks: {
+      1:'Jij bent er nog niet.',
+      2:'Doe alsof je alles al gezien hebt. Een beetje verveeld, maar wel chic.',
+      3:'Geef iemand een stijltip waar ze niets mee kunnen.',
+      4:'Knik goedkeurend naar de uiteindelijke chaos. "Zoals verwacht."'
+    }
+  },
+  { id:'goldy', name:'Goldy', emoji:'✨', type:'Grote rol', color:'#FFB830',
+    desc:'De gouden party girl. Alles moet glinsteren. Ze schittert letterlijk in elke scène.',
+    tasks: {
+      1:'Jij bent er nog niet.',
+      2:'Maak een fonkelende entree. Doe alsof een spotlight op jou schijnt.',
+      3:'Spreek iedereen bemoedigend toe. Goud ziet altijd de zonnige kant.',
+      4:'Eis dat het slotfeest "gouden confetti" heeft. Hoe dan ook.'
+    }
+  },
+  // SMAAKMAKERS
+  { id:'ronBom', name:'Ron Bommetje', emoji:'🏊', type:'Smaakmaker', color:'#00B4D8',
+    desc:'Badmeester. Roept naar de coulissen. Had toch gezegd: geen bommetje!',
+    tasks: {
+      1:'Jij bent er nog niet.',
+      2:'Patrouilleer langs het podium en wijs mensen terecht als ze iets fout doen.',
+      3:'Roep naar de coulissen: "GEEN BOMMETJE!" en doe een fluitje na.',
+      4:'Verklaar dat Agent O de slechtste zwemmer is die je ooit zag.'
+    }
+  },
+  { id:'tonBom', name:'Ton Bommetje', emoji:'🤿', type:'Smaakmaker', color:'#00B4D8',
+    desc:'Broer van Ron. Ook badmeester. Strenger dan Ron, maar ook een beetje bang voor de bananenboot.',
+    tasks: {
+      1:'Jij bent er nog niet.',
+      2:'Loop achter Ron aan en beaam alles wat hij zegt.',
+      3:'Ontdek de bananenboot en verberg je angst slecht.',
+      4:'Feliciteer iedereen officieel als badmeester — met een grote glimlach.'
+    }
+  },
+  { id:'agentA', name:'Agent A', emoji:'🕶️', type:'Smaakmaker', color:'#9b5de5',
+    desc:'Beveiligingsagent van Koning Lomp. Serieus en mysterieus. Weet niet dat Ger de nep-Lomp is.',
+    tasks: {
+      1:'Jij bent er nog niet.',
+      2:'Scan de ruimte. Ga vlak naast iemand staan zonder iets te zeggen.',
+      3:'Bewaker de nep-Lomp (Ger) met grote inzet. Laat je niet afleiden.',
+      4:'Besef dat je de verkeerde hebt bewaakt. Sla je hand voor je gezicht.'
+    }
+  },
+  { id:'agentC', name:'Agent C', emoji:'🕶️', type:'Smaakmaker', color:'#9b5de5',
+    desc:'Beveiligingsagent. Methodisch en stil. Controleert alles dubbel.',
+    tasks: {
+      1:'Jij bent er nog niet.',
+      2:'Controleer de ingangen. Knik ernaar — ook als er geen ingangen zijn.',
+      3:'Fluister iets in de "radio" (jouw hand). Kijk dan ernstig.',
+      4:'Rapporteer: "Situatie onder controle." Zelfs als die dat niet is.'
+    }
+  },
+  { id:'agentT', name:'Agent T', emoji:'🕶️', type:'Smaakmaker', color:'#9b5de5',
+    desc:'Beveiligingsagent. Minder ervaren — raakt in de war bij te veel actie.',
+    tasks: {
+      1:'Jij bent er nog niet.',
+      2:'Probeer stoer te kijken maar verraad nervositeit met je handen.',
+      3:'Roep het foute signaalwoord op het verkeerde moment.',
+      4:'Geef toe dat dit je eerste echte missie was. Trots maar ook opgelucht.'
+    }
+  },
+  { id:'agentU', name:'Agent U', emoji:'🕶️', type:'Smaakmaker', color:'#9b5de5',
+    desc:'Beveiligingsagent. Overdrijft zijn taak enorm — blokkeert zelfs onschuldige gasten.',
+    tasks: {
+      1:'Jij bent er nog niet.',
+      2:'Houd Manuel één keer fysiek (mime) tegen voor "verdachte dweilactiviteiten".',
+      3:'Sta midden op het podium zonder iets te doen. Mysterieus.',
+      4:'Kondig jezelf af als held van de hele operatie. Niemand is het daarmee eens.'
+    }
+  },
+  { id:'agentX', name:'Agent X', emoji:'🕶️', type:'Smaakmaker', color:'#9b5de5',
+    desc:'De mysterieuze Agent X. Niemand weet precies waarom hij er is. Hijzelf ook niet.',
+    tasks: {
+      1:'Jij bent er nog niet.',
+      2:'Kom op het podium. Kijk iedereen aan. Loop dan weer weg.',
+      3:'Reageer op ALLES alsof het een code is. Knik wijs bij elk gesprek.',
+      4:'Onthul dat jij het geheimste geheim van allemaal kent — maar zeg niet wat het is.'
+    }
+  },
+  { id:'leontien', name:'Leontien', emoji:'🌟', type:'Smaakmaker', color:'#FFB830',
+    desc:'Quizassistente bij Grijp die Prijs. Breed lachend, superenthousiast, shinet haar moment.',
+    tasks: {
+      1:'Kondig de kandidaten aan en wijs naar de prijzen met een grote glimlach.',
+      2:'Jij bent er in scène 2 niet meer. Bereid je voor op een verrassing.',
+      3:'Verschijn eventueel als Jessy de stewardess — zelfde energie, ander kostuum!',
+      4:'Kondig het einde van de avonturen plechtig aan.'
+    }
+  },
+  { id:'justien', name:'Justien', emoji:'🌟', type:'Smaakmaker', color:'#FFB830',
+    desc:'Quizassistente bij Grijp die Prijs. Net zo enthousiast als Leontien — maar dan nét iets meer.',
+    tasks: {
+      1:'Wijs naar elke prijs alsof het de heilige graal is.',
+      2:'Jij bent er in scène 2 niet meer — of misschien wel als Dessy!',
+      3:'Verschijn eventueel als Dessy de stewardess.',
+      4:'Sluit de show af met een schitterende boog-buiging.'
+    }
+  },
+  { id:'jessy', name:'Jessy Stewardess', emoji:'✈️', type:'Smaakmaker', color:'#06d6a0',
+    desc:'Stewardess van luchtvaartmaatschappij Ordinair. Aan vakantie toe — en ze laat het merken.',
+    tasks: {
+      1:'Mogelijk ook Leontien — speel die eerst!',
+      2:'Kom aan op Ibiza. Gooi je vliegtuigpet weg en bestel een cocktail.',
+      3:'Ga mee met Nick Slick/Jack Turbo of help hem dekking te geven.',
+      4:'Onthul dat je wist wie Nick eigenlijk was. Altijd geweten.'
+    }
+  },
+  { id:'dessy', name:'Dessy Stewardess', emoji:'✈️', type:'Smaakmaker', color:'#06d6a0',
+    desc:'Stewardess van luchtvaartmaatschappij Ordinair. Boezemvriend van Jessy.',
+    tasks: {
+      1:'Mogelijk ook Justien — speel die eerst!',
+      2:'Kom aan op Ibiza en vier dat je eindelijk vrij bent.',
+      3:'Houd iemand bezig terwijl Jack Turbo zijn plan uitvoert.',
+      4:'Zucht diep en zeg: "Nooit meer Ordinair." En lach dan.'
+    }
+  },
+  { id:'gijsFortuin', name:'Gijs Fortuin', emoji:'🍀', type:'Smaakmaker', color:'#f72585',
+    desc:'Vader van het geluksgezin Fortuin. Arrogant, zelfverzekerd — en altijd heeft hij gelijk.',
+    tasks: {
+      1:'Doe alsof winnen bij de quiz voor jou een zekerheid is. Geen twijfel.',
+      2:'Probeer de laatste kamer te claimen voor de Brokkens het doorhebben.',
+      3:'Reageer pompeus op alle verwarring: "Typisch, zo gaat dat altijd met ons."',
+      4:'Feliciteer jezelf uitgebreid — ook al speelde jij nauwelijks een rol.'
+    }
+  },
+  { id:'emmaFortuin', name:'Emma Fortuin', emoji:'🍀', type:'Smaakmaker', color:'#f72585',
+    desc:'Moeder van het geluksgezin. Even zelfverzekerd als Gijs, maar met meer stijl.',
+    tasks: {
+      1:'Kijk meewarig naar de Brokkens en fluister iets in Gijs zijn oor.',
+      2:'Accepteer de kamer alsof dit de normaalste zaak van de wereld is.',
+      3:'Kijk verbaasd naar alle chaos en zeg: "Wij hadden dit nooit meegemaakt."',
+      4:'Neem Peter bij de hand en verlaat de scène met koninklijk vertoon.'
+    }
+  },
+  { id:'peterFortuin', name:'Peter Fortuin', emoji:'🍀', type:'Smaakmaker', color:'#f72585',
+    desc:'Verwende, verveelde zoon van de Fortunen. Vindt alles eigenlijk best saai.',
+    tasks: {
+      1:'Kijk rond alsof je liever thuis was gebleven.',
+      2:'Vind het kraslot. Reageer alsof het je niets kan schelen.',
+      3:'Zeg één keer iets heel slims en kijk dan weer weg.',
+      4:'Geef toe dat dit toch een beetje leuk was. Maar niet te veel.'
+    }
+  },
+];
+
+const SCENES = [
+  {
+    id: 1,
+    title: 'De quiz — Grijp die Prijs!',
+    location: '📺 Studio van Grijp die Prijs!',
+    desc: 'Nick Slick presenteert de grote quiz. Familie Brokken en Familie Fortuin strijden om de prijs: een reis naar Ibiza! De Brokkens trekken de gouden bal… ze winnen! Maar wat niemand weet: de quiz was nep.',
+    hostTip: 'Laat Nick Slick de quiz presenteren. Leontien en Justien kondigen de prijzen aan. De Fortuin-familie doet arrogant. Familie Brokken reageert overdreven blij. Laat de klas kiezen: wie trok de gouden bal?',
+    cast: ['nickJack','leontien','justien','ger','ellen','puk','gijsFortuin','emmaFortuin','peterFortuin'],
+    choices: [
+      { emoji:'🥇', text:'Familie Brokken trekt de gouden bal! Ze winnen de reis!', result:'win', next:2 },
+      { emoji:'🍀', text:'Familie Fortuin trekt de gouden bal... maar wacht — er is een vergissing!', result:'twist', next:2 },
+    ],
+    voteLabel: null,
+  },
+  {
+    id: 2,
+    title: 'Aankomst op Ibiza — geen kamer!',
+    location: '🌴 Resort De Roze Flamingo — Lobby',
+    desc: 'De Brokkens arriveren op Ibiza, maar er is geen kamer gereserveerd! Manuel kondigt alles luid aan via de microfoon. Rosa heeft hen al snel door. De party girls stromen het resort in. Ger verzint een plan: ze doen zich voor als personeel!',
+    hostTip: 'Manuel kondigt de gasten aan via microfoon. Rosa observeert. Ger fluistert zijn plan. Party girls komen individueel binnen. De badmeesters patrouilleren. Agents controleren ingangen.',
+    cast: ['ger','ellen','puk','rosa','manuel','fanny','roxy','indy','jenny','ivy','goldy','ronBom','tonBom','agentA','agentC'],
+    choices: [
+      { emoji:'🛎️', text:'Ger en Ellen doen zich voor als personeel — het lukt! Rosa kijkt verdacht.', result:'works', next:3 },
+      { emoji:'😬', text:'Rosa heeft hen meteen door en vraagt uitleg. Familie Brokken moet improviseren!', result:'caught', next:3 },
+    ],
+    voteLabel: 'Wie gedraagt zich het vreemdst in het resort?',
+  },
+  {
+    id: 3,
+    title: 'Undercover als Koning Lomp!',
+    location: '🛁 De Spa + 🏨 Resort hal',
+    desc: 'Ger, Ellen en Puk verstoppen zich in de spa. Ze horen toevallig dat Koning Lomp op bezoek komt! Dat verklaar de undercovers! Het nieuwe plan: Ger doet zich voor als Koning Lomp, Ellen als zijn vrouw. Tegelijk arriveert de échte Lomp...',
+    hostTip: 'Jasmijn en Jasmina roddelen in de spa. Ger en Ellen verstoppen zich. Agent O reageert op elk "O". Dan komt Koning Lomp echt binnen — en ziet een nep-versie van zichzelf!',
+    cast: ['ger','ellen','puk','jasmijn','jasmina','agentO','koningLomp','millennia','agentA','agentC','agentT','agentU','agentX'],
+    choices: [
+      { emoji:'👑', text:'Ger overtuigt iedereen als nep-Lomp. De echte Lomp barst woedend binnen!', result:'chaos', next:4 },
+      { emoji:'😅', text:'Agent O heeft Ger al half door — maar zegt niets. Spanning stijgt!', result:'suspense', next:4 },
+    ],
+    voteLabel: 'Wie is verdacht undercover? Stem wie je het minst vertrouwt!',
+  },
+  {
+    id: 4,
+    title: 'De grote onthulling!',
+    location: '🌅 Resort De Roze Flamingo — Grote zaal',
+    desc: 'De waarheid komt eindelijk aan het licht! Nick Slick blijkt Jack Turbo te zijn. De Fortuin-familie had alles al geregeld. Rosa onthult wie ze allemaal had doorzien. De Brokkens krijgen eindelijk hun hotelkamer — en het feest kan beginnen!',
+    hostTip: 'Dit is het slotakkoord! Laat elke speler zijn grote onthullingsmoment hebben. Sluit af met een gezamenlijk feestmoment. Vraag de klas: heeft iedereen zijn personage goed gespeeld?',
+    cast: ['ger','ellen','puk','rosa','manuel','nickJack','agentO','koningLomp','millennia','fanny','goldy','camilla','ruth'],
+    choices: [
+      { emoji:'🎉', text:'Iedereen vergeeft elkaar — feest op Ibiza! Familie Brokken krijgt de beste kamer.', result:'happy', next:'end_happy' },
+      { emoji:'😤', text:'Koning Lomp eist een officiële verontschuldiging vóór het feest begint!', result:'lomp', next:'end_lomp' },
+    ],
+    voteLabel: 'Wie heeft zijn personage het BESTE gespeeld vandaag?',
+  },
+];
+
+const ENDINGS = {
+  end_happy: {
+    emoji: '🎉',
+    title: 'Einde gelukkig!',
+    text: 'Familie Brokken heeft het gered! Ze krijgen de mooiste kamer van het resort. Nick Slick heeft zijn verdiende loon. En Ibiza heeft een feestje dat ze nooit vergeten. Geweldig gespeeld!'
+  },
+  end_lomp: {
+    emoji: '👑',
+    title: 'Koning Lomp heeft zijn zin!',
+    text: 'Na een indrukwekkende toespraak van Zijne Majesteit Lomp kiest iedereen eieren voor zijn geld. Het feest gaat door — maar wél met officieel protocol. Bravo voor jullie allemaal!'
+  }
+};
+
+// ============================================================
+//  GAME STATE (local multiplayer via localStorage broadcast)
+// ============================================================
+let myRole = null;
+let myScreen = 'role'; // role | wait | host | scene | end
+let isHost = false;
+let gameCode = null;
+let currentScene = 1;
+let votes = {}; // roleid -> count
+let myVote = null;
+let votesRevealed = false;
+let choiceMade = null;
+let connectedPlayers = {}; // roleid -> {name, connected}
+
+// ===== STORAGE KEY =====
+function storeKey(){ return 'ibiza_' + gameCode; }
+function readState(){
+  try{ return JSON.parse(localStorage.getItem(storeKey()))||{}; }catch(e){ return {}; }
+}
+function writeState(obj){
+  localStorage.setItem(storeKey(), JSON.stringify(obj));
+  localStorage.setItem(storeKey()+'_ts', Date.now());
+}
+
+// ===== POLL =====
+let pollInterval = null;
+function startPolling(){
+  if(pollInterval) clearInterval(pollInterval);
+  pollInterval = setInterval(()=>{
+    syncFromState();
+  }, 1200);
+}
+function stopPolling(){ if(pollInterval) clearInterval(pollInterval); }
+
+function syncFromState(){
+  if(!gameCode) return;
+  const s = readState();
+  if(!s.scene) return;
+
+  // update connected players display
+  if(isHost){
+    connectedPlayers = s.players || {};
+    renderHostPlayers();
+    votes = s.votes || {};
+    renderVotesTally();
+    return;
+  }
+
+  // Player: follow host's scene
+  if(s.scene && s.scene !== currentScene){
+    currentScene = s.scene;
+    votes = {};
+    myVote = null;
+    votesRevealed = false;
+    choiceMade = null;
+    renderSceneScreen();
+  }
+  if(s.votesRevealed && !votesRevealed){
+    votesRevealed = true;
+    votes = s.votes || {};
+    renderVoteOptions();
+  }
+  if(s.ended){
+    showEnding(s.ending);
+  }
+  // update taken roles
+  renderRoleGrid();
+}
+
+// ============================================================
+//  UI HELPERS
+// ============================================================
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function toast(msg, dur=2500){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),dur);
+}
+
+// ============================================================
+//  ROLE SCREEN
+// ============================================================
+function renderRoleGrid(){
+  const grid = document.getElementById('roleGrid');
+  const s = gameCode ? readState() : {};
+  const taken = s.players ? Object.keys(s.players) : [];
+
+  const groups = [
+    {label:'🌟 Hoofdrollen', type:'Hoofdrol'},
+    {label:'🎭 Grote rollen', type:'Grote rol'},
+    {label:'🎪 Smaakmakers', type:'Smaakmaker'},
+  ];
+
+  grid.innerHTML = '';
+  groups.forEach(g=>{
+    const label = document.createElement('div');
+    label.className='role-group-label';
+    label.textContent=g.label;
+    grid.appendChild(label);
+
+    ROLES.filter(r=>r.type===g.type).forEach(role=>{
+      const isTaken = taken.includes(role.id) && role.id !== (myRole&&myRole.id);
+      const div=document.createElement('div');
+      div.className='role-card'+(isTaken?' taken':'');
+      div.style.setProperty('--role-color',role.color);
+      div.innerHTML=`<span class="role-emoji">${role.emoji}</span><div class="role-name">${role.name}</div><div class="role-type">${role.type}</div>`;
+      if(!isTaken) div.onclick=()=>selectRole(role);
+      grid.appendChild(div);
+    });
+  });
+}
+
+function selectRole(role){
+  myRole = role;
+  if(gameCode){
+    // join as this role
+    const s=readState();
+    s.players = s.players||{};
+    s.players[role.id]={name:role.name,emoji:role.emoji};
+    writeState(s);
+    document.getElementById('myCharBadge').textContent = role.emoji+' '+role.name;
+    showScreen('waitScreen');
+    myScreen='wait';
+    startPolling();
+    syncFromState();
+    toast('Je speelt als '+role.name+'! Wachten op de leerkracht...');
+  } else {
+    toast('Kies eerst een gamecode of word host!');
+  }
+}
+
+function becomeHost(){
+  isHost=true;
+  gameCode = Math.random().toString(36).substring(2,6).toUpperCase();
+  const s={scene:1,players:{},votes:{},votesRevealed:false,ended:false,ending:null};
+  writeState(s);
+  document.getElementById('hostCodeDisplay').textContent=gameCode;
+  renderHostScreen();
+  showScreen('hostScreen');
+  startPolling();
+  toast('Host! Code: '+gameCode);
+}
+
+function joinGame(){
+  const code = document.getElementById('joinCodeInput').value.trim().toUpperCase();
+  if(code.length<3){ toast('Voer een geldige code in!'); return; }
+  gameCode=code;
+  const s=readState();
+  if(!s.scene){ toast('Geen spel gevonden met code '+code); gameCode=null; return; }
+  toast('Verbonden! Kies nu je personage.');
+  renderRoleGrid();
+  startPolling();
+}
+
+// ============================================================
+//  HOST SCREEN
+// ============================================================
+function renderHostScreen(){
+  // scene thumbs
+  const thumbs=document.getElementById('sceneThumbs');
+  thumbs.innerHTML='';
+  SCENES.forEach((sc,i)=>{
+    const d=document.createElement('div');
+    d.className='sthumb'+(sc.id===currentScene?' active':sc.id<currentScene?' done':'');
+    d.textContent=sc.id;
+    d.onclick=()=>hostGoToScene(sc.id);
+    thumbs.appendChild(d);
+  });
+  document.getElementById('hostSceneBadge').textContent='Scène '+currentScene;
+
+  const scene=SCENES.find(s=>s.id===currentScene);
+  if(!scene) return;
+  document.getElementById('hostSceneTitle').textContent=scene.title;
+  document.getElementById('hostSceneDesc').textContent=scene.hostTip;
+  const cast=document.getElementById('hostSceneCast');
+  cast.innerHTML='';
+  scene.cast.forEach(rid=>{
+    const r=ROLES.find(x=>x.id===rid);
+    if(!r) return;
+    const pill=document.createElement('div');
+    pill.className='player-pill';
+    pill.innerHTML=`${r.emoji} ${r.name}`;
+    cast.appendChild(pill);
+  });
+}
+
+function renderHostPlayers(){
+  const list=document.getElementById('connectedList');
+  const count=document.getElementById('connectedCount');
+  const players=connectedPlayers;
+  count.textContent=Object.keys(players).length;
+  list.innerHTML='';
+  Object.entries(players).forEach(([rid,p])=>{
+    const pill=document.createElement('div');
+    pill.className='player-pill';
+    pill.innerHTML=`<div class="dot"></div>${p.emoji} ${p.name}`;
+    list.appendChild(pill);
+  });
+}
+
+function renderVotesTally(){
+  const tally=document.getElementById('votesTally');
+  if(!votes||Object.keys(votes).length===0){
+    tally.innerHTML='<p style="color:var(--muted);font-size:14px">Nog geen stemmen</p>';
+    return;
+  }
+  const total=Object.values(votes).reduce((a,b)=>a+b,0);
+  const sorted=Object.entries(votes).sort((a,b)=>b[1]-a[1]);
+  tally.innerHTML='';
+  sorted.forEach(([rid,cnt])=>{
+    const r=ROLES.find(x=>x.id===rid)||{emoji:'❓',name:rid};
+    const pct=Math.round(cnt/total*100);
+    const row=document.createElement('div');
+    row.innerHTML=`<div class="tally-row"><span>${r.emoji} ${r.name}</span><span><strong>${cnt}</strong> stem(men)</span></div><div class="tally-bar" style="width:${pct}%"></div>`;
+    tally.appendChild(row);
+  });
+}
+
+function hostNextScene(){
+  const s=readState();
+  const next=Math.min(currentScene+1,SCENES.length);
+  currentScene=next;
+  s.scene=next;s.votes={};s.votesRevealed=false;
+  writeState(s);
+  renderHostScreen();
+}
+function hostPrevScene(){
+  const s=readState();
+  currentScene=Math.max(1,currentScene-1);
+  s.scene=currentScene;s.votes={};s.votesRevealed=false;
+  writeState(s);
+  renderHostScreen();
+}
+function hostGoToScene(n){
+  const s=readState();
+  currentScene=n;
+  s.scene=n;s.votes={};s.votesRevealed=false;
+  writeState(s);
+  renderHostScreen();
+}
+function hostRevealVotes(){
+  const s=readState();
+  s.votesRevealed=true;
+  writeState(s);
+  votesRevealed=true;
+  toast('Stemmen onthuld!');
+}
+
+// ============================================================
+//  SCENE SCREEN (PLAYER)
+// ============================================================
+function renderSceneScreen(){
+  showScreen('sceneScreen');
+  myScreen='scene';
+  if(!myRole) return;
+
+  const scene=SCENES.find(s=>s.id===currentScene);
+  if(!scene) return;
+
+  document.getElementById('myRoleTop').textContent=myRole.emoji+' '+myRole.name;
+  document.getElementById('mySceneNum').textContent='Scène '+currentScene;
+  document.getElementById('sceneLocation').textContent=scene.location;
+  document.getElementById('sceneTitle').textContent=scene.title;
+  document.getElementById('sceneText').textContent=scene.desc;
+
+  // My task
+  const task=myRole.tasks[currentScene]||'Observeer goed en speel je personage!';
+  document.getElementById('myTaskTitle').textContent=myRole.name+' doet:';
+  document.getElementById('myTaskDesc').textContent=task;
+  document.getElementById('myTaskTip').textContent='💡 Tip: '+myRole.desc;
+
+  // Choices — only show for first player (Ger, or first in cast)
+  const choicesArea=document.getElementById('choicesArea');
+  choicesArea.innerHTML='';
+  const isLeadPlayer = scene.cast[0]===myRole.id;
+  if(isLeadPlayer && !choiceMade){
+    scene.choices.forEach(ch=>{
+      const btn=document.createElement('button');
+      btn.className='choice-btn';
+      btn.innerHTML=`<span class="choice-emoji">${ch.emoji}</span>${ch.text}`;
+      btn.onclick=()=>makeChoice(ch, scene);
+      choicesArea.appendChild(btn);
+    });
+  }
+
+  // Vote section
+  const voteArea=document.getElementById('voteArea');
+  if(scene.voteLabel){
+    voteArea.style.display='block';
+    document.querySelector('.vote-header').textContent='🗳️ '+scene.voteLabel;
+    renderVoteOptions();
+  } else {
+    voteArea.style.display='none';
+  }
+}
+
+function renderVoteOptions(){
+  const scene=SCENES.find(s=>s.id===currentScene);
+  if(!scene||!scene.voteLabel) return;
+  const opts=document.getElementById('voteOptions');
+  opts.innerHTML='';
+
+  const s=readState();
+  const revealed=s.votesRevealed||votesRevealed;
+
+  scene.cast.forEach(rid=>{
+    if(rid===myRole.id) return; // can't vote for self
+    const r=ROLES.find(x=>x.id===rid)||{emoji:'?',name:rid};
+    const myVoted=myVote===rid;
+    const vcount=(votes[rid]||s.votes&&s.votes[rid])||0;
+    const btn=document.createElement('div');
+    btn.className='vote-option'+(myVoted?' voted':'');
+    btn.innerHTML=`${r.emoji} ${r.name}${revealed?`<span class="vote-count">${vcount} stem(men)</span>`:''}`;
+    btn.onclick=()=>castVote(rid);
+    opts.appendChild(btn);
+  });
+}
+
+function castVote(rid){
+  myVote=rid;
+  const s=readState();
+  s.votes=s.votes||{};
+  if(myVote) s.votes[myVote]=(s.votes[myVote]||0)-0; // undo old? keep simple
+  s.votes[rid]=(s.votes[rid]||0)+1;
+  votes=s.votes;
+  writeState(s);
+  renderVoteOptions();
+  toast('Stem uitgebracht! 🗳️');
+}
+
+function makeChoice(ch, scene){
+  choiceMade=ch;
+  const choicesArea=document.getElementById('choicesArea');
+  choicesArea.innerHTML=`
+    <div class="outcome-card">
+      <span class="big-emoji">${ch.emoji}</span>
+      <h2>Keuze gemaakt!</h2>
+      <p>${ch.text}</p>
+    </div>`;
+
+  if(ch.next && (ch.next+'').startsWith('end')){
+    const s=readState();
+    s.ended=true;s.ending=ch.next;
+    writeState(s);
+    setTimeout(()=>showEnding(ch.next),2000);
+  }
+  toast('Keuze: '+ch.result);
+}
+
+function showEnding(endKey){
+  const e=ENDINGS[endKey]||ENDINGS['end_happy'];
+  document.getElementById('endEmoji').textContent=e.emoji;
+  document.getElementById('endTitle').textContent=e.title;
+  document.getElementById('endText').textContent=e.text;
+  showScreen('endScreen');
+}
+
+// ============================================================
+//  RESET
+// ============================================================
+function resetGame(){
+  if(gameCode) localStorage.removeItem(storeKey());
+  stopPolling();
+  myRole=null;myScreen='role';isHost=false;gameCode=null;
+  currentScene=1;votes={};myVote=null;votesRevealed=false;choiceMade=null;
+  renderRoleGrid();
+  showScreen('roleScreen');
+}
+
+// ============================================================
+//  INIT
+// ============================================================
+renderRoleGrid();
+</script>
+</body>
+</html>
