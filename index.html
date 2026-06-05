@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Undercover op Ibiza</title>
+<style>
+:root{--sun:#FFB830;--coral:#FF5757;--sea:#00B4D8;--deep:#0A1628;--green:#06d6a0;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#0A1628;color:#fff;font-family:'Segoe UI',sans-serif;overflow:hidden;height:100vh;width:100vw;}
+
+.screen{display:none;position:absolute;inset:0;z-index:10;overflow-y:auto;flex-direction:column;align-items:center;justify-content:center;padding:20px;}
+.screen.active{display:flex;}
+
+.card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:28px 22px;max-width:400px;width:100%;text-align:center;}
+.card h1{font-size:clamp(26px,7vw,40px);background:linear-gradient(135deg,#FFB830,#FF5757);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;font-weight:900;}
+.card p{color:rgba(255,255,255,.6);font-size:14px;margin-bottom:18px;line-height:1.6;}
+
+.btn{display:block;width:100%;padding:14px;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:10px;transition:.15s;}
+.btn:hover{transform:translateY(-2px);}
+.btn-red{background:#FF5757;color:#fff;}
+.btn-blue{background:#00B4D8;color:#fff;}
+.btn-green{background:#06d6a0;color:#fff;}
+.btn-purple{background:#9b5de5;color:#fff;}
+.btn-ghost{background:rgba(255,255,255,.1);color:rgba(255,255,255,.8);}
+
+.big-code{font-size:52px;font-weight:900;letter-spacing:10px;color:var(--sun);margin:10px 0;}
+
+input.ci{width:100%;background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2);border-radius:10px;padding:12px;color:#fff;font-size:20px;font-weight:800;text-align:center;letter-spacing:4px;text-transform:uppercase;outline:none;font-family:inherit;margin-bottom:12px;}
+input.ci:focus{border-color:var(--sun);}
+
+.role-list{max-height:260px;overflow-y:auto;text-align:left;margin-bottom:14px;}
+.ri{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;border:2px solid transparent;margin-bottom:5px;transition:.15s;}
+.ri:hover{background:rgba(255,255,255,.08);}
+.ri.sel{border-color:var(--sun);background:rgba(255,184,48,.12);}
+.ri.taken{opacity:.35;pointer-events:none;}
+.ri .em{font-size:22px;}
+.ri .nm{font-size:13px;font-weight:700;}
+.ri .tp{font-size:11px;color:rgba(255,255,255,.4);}
+
+.pill{display:inline-flex;align-items:center;gap:5px;background:rgba(6,214,160,.15);border:1px solid var(--green);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;margin:3px;}
+
+#gameCanvas{position:absolute;inset:0;width:100%;height:100%;display:none;z-index:1;}
+#gameCanvas.active{display:block;}
+
+#hud{position:absolute;inset:0;z-index:5;display:none;pointer-events:none;}
+#hud.active{display:block;}
+
+#roleBadge{position:absolute;top:12px;left:12px;background:rgba(10,22,40,.9);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:8px 14px;font-size:13px;font-weight:700;backdrop-filter:blur(6px);}
+#sceneLbl{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:rgba(255,87,87,.9);border-radius:20px;padding:5px 16px;font-size:12px;font-weight:800;letter-spacing:1px;white-space:nowrap;}
+#minimap{position:absolute;top:12px;right:12px;width:80px;height:80px;background:rgba(10,22,40,.8);border:1px solid rgba(255,255,255,.2);border-radius:10px;overflow:hidden;}
+
+#taskBox{position:absolute;bottom:150px;left:50%;transform:translateX(-50%);background:rgba(10,22,40,.95);border:1px solid var(--sun);border-radius:16px;padding:14px 18px;max-width:300px;width:88%;text-align:center;opacity:0;transition:opacity .3s;}
+#taskBox.show{opacity:1;}
+#taskBox h3{color:var(--sun);font-size:14px;margin-bottom:5px;}
+#taskBox p{font-size:13px;color:rgba(255,255,255,.8);line-height:1.5;}
+
+#hint{position:absolute;bottom:150px;left:50%;transform:translateX(-50%);background:rgba(255,184,48,.2);border:1px solid var(--sun);border-radius:30px;padding:8px 20px;font-size:13px;font-weight:800;color:var(--sun);opacity:0;transition:opacity .3s;white-space:nowrap;}
+#hint.show{opacity:1;}
+
+#okBadge{position:absolute;top:58px;left:50%;transform:translateX(-50%);background:rgba(6,214,160,.95);border-radius:20px;padding:6px 18px;font-size:13px;font-weight:800;white-space:nowrap;opacity:0;transition:opacity .3s;}
+#okBadge.show{opacity:1;}
+
+#fadeover{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .5s;z-index:8;}
+#fadeover.dark{opacity:1;}
+
+/* HOST CONTROLS */
+#hostHud{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:none;gap:8px;pointer-events:all;z-index:6;}
+#hostHud.active{display:flex;}
+
+/* JOYSTICK */
+#joy{position:absolute;bottom:24px;left:24px;width:100px;height:100px;display:none;pointer-events:all;z-index:6;}
+#joyBase{width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.2);position:relative;}
+#joyKnob{width:40px;height:40px;border-radius:50%;background:rgba(255,184,48,.85);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);}
+
+#eBnt{position:absolute;bottom:24px;right:24px;width:64px;height:64px;border-radius:50%;background:rgba(255,184,48,.9);border:none;font-size:22px;cursor:pointer;pointer-events:all;z-index:6;display:none;}
+
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(70px);background:var(--deep);color:#fff;padding:10px 22px;border-radius:30px;font-size:13px;font-weight:700;transition:transform .3s;z-index:999;}
+#toast.show{transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div class="screen active" id="sHome">
+  <div class="card">
+    <h1>🌴 Undercover<br>op Ibiza</h1>
+    <p>3D klasspel voor telefoon en laptop</p>
+    <button class="btn btn-red" onclick="goHost()">🎬 Leerkracht — Host worden</button>
+    <button class="btn btn-blue" onclick="show('sJoin')">📱 Leerling — Verbinden</button>
+  </div>
+</div>
+
+<!-- HOST LOBBY -->
+<div class="screen" id="sHost">
+  <div class="card">
+    <h1>🎬 Host</h1>
+    <p>Geef deze code aan de klas:</p>
+    <div class="big-code" id="hostCode">????</div>
+    <div id="hostPlayers" style="margin-bottom:14px;min-height:30px;"></div>
+    <div id="hostCount" style="font-size:13px;color:var(--green);margin-bottom:12px;"></div>
+    <button class="btn btn-green" onclick="hostStart()">▶️ SPEL STARTEN</button>
+    <button class="btn btn-purple" onclick="hostNext()">⏭️ Volgende scène</button>
+    <button class="btn btn-ghost" onclick="show('sHome')">← Terug</button>
+  </div>
+</div>
+
+<!-- JOIN -->
+<div class="screen" id="sJoin">
+  <div class="card">
+    <h1>📱 Verbinden</h1>
+    <p>Voer de code in van de leerkracht</p>
+    <input class="ci" id="joinInput" placeholder="CODE" maxlength="4" oninput="this.value=this.value.toUpperCase()">
+    <button class="btn btn-red" onclick="doJoin()">Verbinden →</button>
+    <button class="btn btn-ghost" onclick="show('sHome')">← Terug</button>
+  </div>
+</div>
+
+<!-- ROLE SELECT -->
+<div class="screen" id="sRole">
+  <div class="card">
+    <h1>🎭 Kies je rol</h1>
+    <p>Kies een beschikbaar personage</p>
+    <div class="role-list" id="roleList"></div>
+    <button class="btn btn-red" onclick="pickRole()">✓ Dit is mijn personage!</button>
+  </div>
+</div>
+
+<!-- WAIT -->
+<div class="screen" id="sWait">
+  <div class="card">
+    <div style="font-size:44px">⏳</div>
+    <h1 style="font-size:22px;margin-top:10px" id="waitName">Wachten...</h1>
+    <p>De leerkracht start het spel zodra iedereen klaar is</p>
+    <div id="waitPlayers" style="margin-top:12px;"></div>
+  </div>
+</div>
+
+<!-- END -->
+<div class="screen" id="sEnd">
+  <div class="card">
+    <div style="font-size:56px">🎉</div>
+    <h1>Einde!</h1>
+    <p>Het avontuur op Ibiza is voorbij. Geweldig gespeeld!</p>
+    <button class="btn btn-red" onclick="location.reload()">🔁 Opnieuw</button>
+  </div>
+</div>
+
+<!-- 3D CANVAS -->
+<canvas id="gameCanvas"></canvas>
+
+<!-- HUD -->
+<div id="hud">
+  <div id="roleBadge">–</div>
+  <div id="sceneLbl">–</div>
+  <div id="minimap"><canvas id="mmCanvas" width="80" height="80"></canvas></div>
+  <div id="okBadge">✅ Opdracht voltooid!</div>
+  <div id="taskBox"><h3 id="tTitle">–</h3><p id="tDesc">–</p></div>
+  <div id="hint">Druk E of tik 👆</div>
+  <div id="fadeover"></div>
+  <div id="hostHud">
+    <button class="btn btn-green" style="width:auto;padding:10px 18px;" onclick="hostNext()">⏭️ Volgende scène</button>
+    <button class="btn btn-red" style="width:auto;padding:10px 18px;" onclick="location.reload()">✕ Stop</button>
+  </div>
+  <div id="joy"><div id="joyBase"><div id="joyKnob"></div></div></div>
+  <button id="eBnt" onclick="doInteract()">👆</button>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ===================== DATA =====================
+var ROLES = [
+  {id:'ger',    name:'Ger Brokken',      emoji:'👨', col:0xFF5757,
+   s:{1:'Ga naar het podium voor de quiz!',                    sz1:'stage',
+      2:'Meld je aan bij de receptie. Geen kamer — improviseer!', sz2:'lobby',
+      3:'Jij bent Koning Lomp. Ga naar de troonzaal!',          sz3:'throne',
+      4:'Grote speech bij het podium. Onthul de waarheid!',     sz4:'stage'}},
+  {id:'ellen',  name:'Ellen Brokken',    emoji:'👩', col:0xFF8C42,
+   s:{1:'Juich Ger aan bij het podium!',    sz1:'stage',
+      2:'Ga mee naar de receptie. Doe zenuwachtig.', sz2:'lobby',
+      3:'Speel koningin naast Ger. Troonzaal!', sz3:'throne',
+      4:'Adem opgelucht uit bij de ingang.',  sz4:'entrance'}},
+  {id:'puk',    name:'Puk Brokken',      emoji:'🧒', col:0xFFD700,
+   s:{1:'Zeg "Ik ga stuk" bij het podium.',  sz1:'stage',
+      2:'Rol je ogen bij de receptie.',        sz2:'lobby',
+      3:'Ga naar het strand — word boos!',     sz3:'beach',
+      4:'Ren achter Nick Slick aan bij de bar!', sz4:'bar'}},
+  {id:'rosa',   name:'Rosa',             emoji:'🌹', col:0xff6b9d,
+   s:{1:'Wacht bij de ingang.',               sz1:'entrance',
+      2:'Observeer gasten vanuit de lobby.',   sz2:'lobby',
+      3:'Zwijg en kijk. Ga naar de lobby.',    sz3:'lobby',
+      4:'Onthul alles bij het podium!',        sz4:'stage'}},
+  {id:'manuel', name:'Manuel',           emoji:'🛎️', col:0x00B4D8,
+   s:{1:'Oefen bij de receptiebalie.',         sz1:'lobby',
+      2:'Kondig gasten aan bij de receptie!',  sz2:'lobby',
+      3:'Kondig de verkeerde mensen aan!',     sz3:'lobby',
+      4:'Plechtige aankondiging bij podium.',  sz4:'stage'}},
+  {id:'agentO', name:'Agent O',          emoji:'🕵️', col:0x9b5de5,
+   s:{1:'Wacht bij de ingang.',               sz1:'entrance',
+      2:'Scan mysterieus de lobby.',            sz2:'entrance',
+      3:'Reageer op elk "O" in de lobby!',     sz3:'lobby',
+      4:'Onthul je echte missie bij podium.',  sz4:'stage'}},
+  {id:'jasmijn',name:'Jasmijn',          emoji:'💆', col:0x06d6a0,
+   s:{1:'Wacht in de spa.',                    sz1:'spa',
+      2:'Verwelkom gasten in de spa!',          sz2:'spa',
+      3:'Roddel over Ger en Ellen in de spa!', sz3:'spa',
+      4:'Vertel je roddels bij het podium.',   sz4:'stage'}},
+  {id:'jasmina',name:'Jasmina',          emoji:'🧖', col:0x06d6a0,
+   s:{1:'Wacht in de spa.',                    sz1:'spa',
+      2:'Help gasten ontspannen in de spa.',   sz2:'spa',
+      3:'Fluister je geheim aan Jasmijn!',     sz3:'spa',
+      4:'Reageer dramatisch bij podium.',      sz4:'stage'}},
+  {id:'camilla',name:'Camilla Rustenburg',emoji:'🧘',col:0xf72585,
+   s:{1:'Wacht bij de ingang.',               sz1:'entrance',
+      2:'Ga naar de spa voor rust!',           sz2:'spa',
+      3:'Ontdek de bananenboot op het strand!',sz3:'beach',
+      4:'Vertel dat dit je beste vakantie was!',sz4:'stage'}},
+  {id:'ruth',   name:'Ruth Rustenburg',  emoji:'🧘', col:0xf72585,
+   s:{1:'Wacht bij de ingang.',               sz1:'entrance',
+      2:'Ga naar de spa met Camilla.',         sz2:'spa',
+      3:'Dans stiekem bij het zwembad!',       sz3:'pool',
+      4:'Geef toe dat het feest geweldig was!',sz4:'stage'}},
+  {id:'agentT', name:'Agent T',          emoji:'🕶️', col:0x7b2d8b,
+   s:{1:'Wacht bij de ingang.',               sz1:'entrance',
+      2:'Controleer de ingang. Doe nerveus!', sz2:'entrance',
+      3:'Roep het foute signaalwoord bij lobby!',sz3:'lobby',
+      4:'Geef toe: eerste missie. Ga naar podium.',sz4:'stage'}},
+  {id:'agentC', name:'Agent C',          emoji:'🕶️', col:0x9b5de5,
+   s:{1:'Wacht bij de ingang.',               sz1:'entrance',
+      2:'Controleer alles dubbel bij ingang.', sz2:'entrance',
+      3:'Fluister in je "radio" bij lobby.',   sz3:'lobby',
+      4:'"Situatie onder controle." Podium.',  sz4:'stage'}},
+  {id:'fanny',  name:'Fanny',            emoji:'🪩', col:0xf72585,
+   s:{1:'Wacht bij de ingang.',               sz1:'entrance',
+      2:'Kom vol energie het resort binnen!',  sz2:'entrance',
+      3:'Krijg Camilla en Ruth mee naar zwembad!',sz3:'pool',
+      4:'Leid de slotdans bij het podium!',   sz4:'stage'}},
+  {id:'nickJack',name:'Nick Slick',      emoji:'🎤', col:0xFFB830,
+   s:{1:'Presenteer de quiz bij het podium!', sz1:'stage',
+      2:'Jij bent Jack Turbo. Charme bij bar.',sz2:'bar',
+      3:'Doe nonchalant bij de bar.',          sz3:'bar',
+      4:'Overdreven excuses bij podium!',     sz4:'stage'}},
+  {id:'koningLomp',name:'Koning Lomp',   emoji:'👑', col:0xFFB830,
+   s:{1:'Wacht bij de ingang.',               sz1:'entrance',
+      2:'Wacht bij de ingang.',               sz2:'entrance',
+      3:'Kom WOEDEND binnen bij troonzaal!',  sz3:'throne',
+      4:'Eis verontschuldiging bij podium.',  sz4:'stage'}},
+];
+
+var ZONES = {
+  stage:   {x:0,   z:-18, col:0xFFB830, lbl:'🎤 Podium'},
+  lobby:   {x:0,   z:0,   col:0x00B4D8, lbl:'🛎️ Lobby'},
+  spa:     {x:-18, z:8,   col:0x06d6a0, lbl:'💆 Spa'},
+  pool:    {x:18,  z:8,   col:0x0096c7, lbl:'🏊 Zwembad'},
+  beach:   {x:0,   z:20,  col:0xFFD700, lbl:'🏖️ Strand'},
+  bar:     {x:18,  z:-10, col:0xFF5757, lbl:'🍹 Bar'},
+  entrance:{x:-18, z:-10, col:0x9b5de5, lbl:'🚪 Ingang'},
+  throne:  {x:-8,  z:-12, col:0xFFD700, lbl:'👑 Troonzaal'},
+};
+
+var SCENE_LBLS = ['','📺 GRIJP DIE PRIJS!','🌴 AANKOMST IBIZA','🕵️ UNDERCOVER ALS LOMP','🎉 GROTE ONTHULLING'];
+
+// ===================== STATE =====================
+var gameCode = null;
+var isHost = false;
+var myRole = null;
+var selRoleId = null;
+var curScene = 1;
+var nearZone = null;
+var doneZones = {};
+var pollTmr = null;
+var gameRunning = false;
+
+function storeKey(){ return 'ibiza3d_' + gameCode; }
+function readSt(){
+  try{ return JSON.parse(localStorage.getItem(storeKey()))||{}; }
+  catch(e){ return {}; }
+}
+function writeSt(patch){
+  var cur = readSt();
+  Object.keys(patch).forEach(function(k){ cur[k]=patch[k]; });
+  localStorage.setItem(storeKey(), JSON.stringify(cur));
+}
+
+// ===================== SCREENS =====================
+function show(id){
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+}
+
+function toast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); },2500);
+}
+
+// ===================== HOST =====================
+function goHost(){
+  isHost = true;
+  gameCode = Math.random().toString(36).substring(2,6).toUpperCase();
+  writeSt({scene:1, started:false, ended:false, players:{}, positions:{}});
+  document.getElementById('hostCode').textContent = gameCode;
+  show('sHost');
+  startPoll();
+}
+
+function hostStart(){
+  writeSt({started:true});
+  launch3D();
+}
+
+function hostNext(){
+  var s = readSt();
+  var next = Math.min((s.scene||1)+1, 4);
+  writeSt({scene:next});
+  changeScene(next);
+}
+
+// ===================== JOIN =====================
+function doJoin(){
+  var code = document.getElementById('joinInput').value.trim().toUpperCase();
+  if(code.length < 3){ toast('Voer een geldige code in!'); return; }
+  gameCode = code;
+  var s = readSt();
+  if(s.started === undefined){ toast('Geen spel gevonden: '+code); gameCode=null; return; }
+  buildRoleList();
+  show('sRole');
+  startPoll();
+}
+
+function buildRoleList(){
+  var s = gameCode ? readSt() : {};
+  var taken = Object.keys(s.players||{});
+  var list = document.getElementById('roleList');
+  list.innerHTML = '';
+  ROLES.forEach(function(r){
+    var isTaken = taken.indexOf(r.id) >= 0 && r.id !== (myRole&&myRole.id);
+    var div = document.createElement('div');
+    div.className = 'ri' + (isTaken?' taken':(selRoleId===r.id?' sel':''));
+    div.innerHTML = '<span class="em">'+r.emoji+'</span><div><div class="nm">'+r.name+'</div></div>';
+    if(!isTaken){ div.onclick = (function(rid){ return function(){ selRoleId=rid; buildRoleList(); }; })(r.id); }
+    list.appendChild(div);
+  });
+}
+
+function pickRole(){
+  if(!selRoleId){ toast('Kies eerst een personage!'); return; }
+  myRole = ROLES.filter(function(r){ return r.id===selRoleId; })[0];
+  var s = readSt();
+  var players = s.players||{};
+  players[myRole.id] = {name:myRole.name, emoji:myRole.emoji};
+  writeSt({players:players});
+  document.getElementById('waitName').textContent = myRole.emoji+' '+myRole.name;
+  show('sWait');
+}
+
+// ===================== POLL =====================
+function startPoll(){
+  if(pollTmr) clearInterval(pollTmr);
+  pollTmr = setInterval(function(){ syncSt(); }, 1000);
+}
+
+function syncSt(){
+  if(!gameCode) return;
+  var s = readSt();
+
+  // Update host lobby
+  if(document.getElementById('sHost').classList.contains('active')){
+    renderHostLobby(s);
+  }
+  // Update wait screen
+  if(document.getElementById('sWait').classList.contains('active')){
+    renderWaitPlayers(s);
+    if(s.started && !gameRunning){ launch3D(); }
+  }
+  // Update role list
+  if(document.getElementById('sRole').classList.contains('active')){
+    buildRoleList();
+  }
+  // In game
+  if(gameRunning){
+    if(s.scene && s.scene !== curScene){ changeScene(s.scene); }
+    if(s.ended){ show('sEnd'); }
+    if(s.positions){ updateOthers(s.positions); }
+    // Host lobby counts
+    if(isHost){
+      var cnt = Object.keys(s.players||{}).length;
+      document.getElementById('hostCount').textContent = cnt + ' speler(s) verbonden';
+      renderHostLobby(s);
+    }
+  }
+}
+
+function renderHostLobby(s){
+  var el = document.getElementById('hostPlayers');
+  el.innerHTML = '';
+  Object.values(s.players||{}).forEach(function(p){
+    var pill = document.createElement('span');
+    pill.className = 'pill';
+    pill.textContent = p.emoji+' '+p.name;
+    el.appendChild(pill);
+  });
+  var cnt = Object.keys(s.players||{}).length;
+  document.getElementById('hostCount').textContent = cnt + ' speler(s) verbonden';
+}
+
+function renderWaitPlayers(s){
+  var el = document.getElementById('waitPlayers');
+  el.innerHTML = '';
+  Object.values(s.players||{}).forEach(function(p){
+    var pill = document.createElement('span');
+    pill.className = 'pill';
+    pill.textContent = p.emoji+' '+p.name;
+    el.appendChild(pill);
+  });
+}
+
+// ===================== THREE.JS =====================
+var scene, camera, renderer, clock;
+var playerMesh = null;
+var otherMeshes = {};
+var zoneMeshes = [];
+var camYaw = 0;
+var keys = {};
+var joyDx = 0, joyDy = 0, joyActive = false;
+var posTimer = 0;
+
+function launch3D(){
+  gameRunning = true;
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  document.getElementById('gameCanvas').classList.add('active');
+  document.getElementById('hud').classList.add('active');
+
+  initThree();
+  buildWorld();
+  buildZones();
+  spawnPlayer();
+  setupKeys();
+  setupJoy();
+
+  if(isHost){
+    document.getElementById('hostHud').classList.add('active');
+  }
+
+  var badge = document.getElementById('roleBadge');
+  badge.textContent = myRole ? myRole.emoji+' '+myRole.name : '🎬 Host';
+  document.getElementById('sceneLbl').textContent = SCENE_LBLS[1];
+
+  if(myRole && myRole.s[1]){
+    toast('📋 '+myRole.s[1]);
+  }
+
+  animate();
+  startPoll();
+}
+
+function initThree(){
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x5BB8F5);
+  scene.fog = new THREE.Fog(0x5BB8F5, 35, 90);
+
+  camera = new THREE.PerspectiveCamera(65, window.innerWidth/window.innerHeight, 0.1, 150);
+
+  renderer = new THREE.WebGLRenderer({canvas: document.getElementById('gameCanvas'), antialias:true});
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+
+  clock = new THREE.Clock();
+
+  var ambient = new THREE.AmbientLight(0xffffff, 0.7);
+  scene.add(ambient);
+  var sun = new THREE.DirectionalLight(0xFFE8A0, 1.1);
+  sun.position.set(15, 25, 10);
+  sun.castShadow = true;
+  scene.add(sun);
+
+  window.addEventListener('resize', function(){
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+}
+
+function box(w,h,d,color,x,y,z){
+  var geo = new THREE.BoxGeometry(w,h,d);
+  var mat = new THREE.MeshLambertMaterial({color:color});
+  var mesh = new THREE.Mesh(geo, mat);
+  mesh.position.set(x, y+h/2, z);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  scene.add(mesh);
+  return mesh;
+}
+
+function buildWorld(){
+  // Ground
+  var gGeo = new THREE.PlaneGeometry(120,120);
+  var gMat = new THREE.MeshLambertMaterial({color:0xE8D5A0});
+  var ground = new THREE.Mesh(gGeo, gMat);
+  ground.rotation.x = -Math.PI/2;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  // Sea
+  var seaGeo = new THREE.PlaneGeometry(120,30);
+  var seaMat = new THREE.MeshLambertMaterial({color:0x1A9ECC});
+  var sea = new THREE.Mesh(seaGeo, seaMat);
+  sea.rotation.x = -Math.PI/2;
+  sea.position.set(0,-0.05,35);
+  scene.add(sea);
+
+  // Beach strip
+  var bGeo = new THREE.PlaneGeometry(40,10);
+  var bMat = new THREE.MeshLambertMaterial({color:0xFFF0A0});
+  var beach = new THREE.Mesh(bGeo, bMat);
+  beach.rotation.x = -Math.PI/2;
+  beach.position.set(0,-0.03,23);
+  scene.add(beach);
+
+  // Resort main building
+  box(16,4,12, 0xFFE0D0, 0,0,-6);
+  // Lobby area floor
+  box(12,0.3,10, 0xF5C0A0, 0,0,0);
+  // Spa
+  box(8,3,6,  0xD4EDDA, -18,0,8);
+  // Pool
+  box(8,0.5,8, 0x0096c7, 18,0,8);
+  // Bar
+  box(6,2.5,5, 0xFFB3B3, 18,0,-10);
+  // Stage platform
+  box(8,0.6,5, 0xFFB830, 0,0,-18);
+  // Entrance pillars
+  box(1,4,1, 0xD0B0FF, -20,0,-10);
+  box(1,4,1, 0xD0B0FF, -16,0,-10);
+  // Throne area
+  box(5,0.5,4, 0xFFD700, -8,0,-12);
+
+  // Palms
+  var palmPositions = [[6,5],[−6,14],[14,18],[−14,18],[2,28],[22,5],[−22,5],[0,−24]];
+  palmPositions.forEach(function(p){ addPalm(p[0],p[1]); });
+
+  // Sunbeds on beach
+  for(var i=−3;i<=3;i++){
+    box(1.5,0.3,0.6, 0xFFB830, i*4,0,22);
+  }
+}
+
+function addPalm(x,z){
+  // Trunk
+  var tGeo = new THREE.CylinderGeometry(0.15,0.25,4.5,6);
+  var tMat = new THREE.MeshLambertMaterial({color:0x8B6914});
+  var trunk = new THREE.Mesh(tGeo, tMat);
+  trunk.position.set(x, 2.25, z);
+  scene.add(trunk);
+  // Leaves
+  for(var i=0;i<6;i++){
+    var angle = (i/6)*Math.PI*2;
+    var lGeo = new THREE.SphereGeometry(0.9,5,4);
+    var lMat = new THREE.MeshLambertMaterial({color:0x2D8A2D});
+    var leaf = new THREE.Mesh(lGeo, lMat);
+    leaf.position.set(x+Math.cos(angle)*0.9, 5, z+Math.sin(angle)*0.9);
+    leaf.scale.set(1,0.3,1);
+    scene.add(leaf);
+  }
+  // Coconut
+  var cGeo = new THREE.SphereGeometry(0.22,6,4);
+  var cMat = new THREE.MeshLambertMaterial({color:0x6B3A1F});
+  var coconut = new THREE.Mesh(cGeo,cMat);
+  coconut.position.set(x,4.8,z);
+  scene.add(coconut);
+}
+
+function buildZones(){
+  zoneMeshes = [];
+  Object.keys(ZONES).forEach(function(key){
+    var def = ZONES[key];
+    var geo = new THREE.CylinderGeometry(3.2,3.2,0.15,16);
+    var mat = new THREE.MeshLambertMaterial({color:def.col, transparent:true, opacity:0.4});
+    var mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(def.x, 0.08, def.z);
+    mesh.userData.key = key;
+    scene.add(mesh);
+    zoneMeshes.push(mesh);
+  });
+}
+
+function spawnPlayer(){
+  var col = myRole ? myRole.col : 0xffffff;
+  var mat = new THREE.MeshLambertMaterial({color:col});
+
+  var bodyGeo = new THREE.CylinderGeometry(0.38,0.38,1.1,8);
+  var body = new THREE.Mesh(bodyGeo, mat);
+
+  var headGeo = new THREE.SphereGeometry(0.35,8,8);
+  var head = new THREE.Mesh(headGeo, mat);
+  head.position.y = 0.95;
+
+  playerMesh = new THREE.Group();
+  playerMesh.add(body);
+  playerMesh.add(head);
+  playerMesh.position.set(0,0.55,5);
+  playerMesh.castShadow = true;
+  scene.add(playerMesh);
+
+  // Mobile UI
+  var isMobile = ('ontouchstart' in window);
+  if(isMobile){
+    document.getElementById('joy').style.display = 'block';
+    document.getElementById('eBnt').style.display = 'block';
+  }
+}
+
+function setupKeys(){
+  document.addEventListener('keydown', function(e){ keys[e.key]=true; if(e.key==='e'||e.key==='E') doInteract(); });
+  document.addEventListener('keyup',   function(e){ keys[e.key]=false; });
+}
+
+function setupJoy(){
+  var base = document.getElementById('joyBase');
+  var knob = document.getElementById('joyKnob');
+  var max = 28;
+
+  function move(cx,cy){
+    var r = base.getBoundingClientRect();
+    var dx = cx - r.left - r.width/2;
+    var dy = cy - r.top - r.height/2;
+    var dist = Math.sqrt(dx*dx+dy*dy);
+    if(dist > max){ dx=dx/dist*max; dy=dy/dist*max; }
+    joyDx = dx/max; joyDy = dy/max;
+    knob.style.transform = 'translate(calc(-50% + '+dx+'px), calc(-50% + '+dy+'px))';
+  }
+  function reset(){
+    joyActive=false; joyDx=0; joyDy=0;
+    knob.style.transform='translate(-50%,-50%)';
+  }
+
+  base.addEventListener('touchstart', function(e){ joyActive=true; move(e.touches[0].clientX,e.touches[0].clientY); },{passive:true});
+  base.addEventListener('touchmove',  function(e){ move(e.touches[0].clientX,e.touches[0].clientY); },{passive:true});
+  base.addEventListener('touchend',   reset);
+}
+
+// ===================== GAME LOOP =====================
+function animate(){
+  requestAnimationFrame(animate);
+  var dt = Math.min(clock.getDelta(), 0.05);
+  if(playerMesh){ movePlayer(dt); checkZones(); followCam(); }
+  animZones();
+  drawMinimap();
+  renderer.render(scene, camera);
+
+  posTimer += dt;
+  if(posTimer > 0.25 && playerMesh && gameCode && myRole){
+    posTimer = 0;
+    var s = readSt();
+    var pos = s.positions||{};
+    pos[myRole.id] = {x:playerMesh.position.x, z:playerMesh.position.z, col:myRole.col};
+    writeSt({positions:pos});
+  }
+}
+
+var SPEED = 7;
+
+function movePlayer(dt){
+  var dx=0, dz=0;
+  if(keys['ArrowUp']   ||keys['w']||keys['W']) dz-=1;
+  if(keys['ArrowDown'] ||keys['s']||keys['S']) dz+=1;
+  if(keys['ArrowLeft'] ||keys['a']||keys['A']) camYaw+=dt*1.8;
+  if(keys['ArrowRight']||keys['d']||keys['D']) camYaw-=dt*1.8;
+  if(joyActive){ dx+=joyDx; dz+=joyDy; }
+
+  if(dx!==0||dz!==0){
+    var fw = new THREE.Vector3(-Math.sin(camYaw),0,-Math.cos(camYaw));
+    var rt = new THREE.Vector3( Math.cos(camYaw),0,-Math.sin(camYaw));
+    var mv = fw.clone().multiplyScalar(-dz).add(rt.clone().multiplyScalar(dx));
+    mv.normalize().multiplyScalar(SPEED*dt);
+    playerMesh.position.x += mv.x;
+    playerMesh.position.z += mv.z;
+    playerMesh.position.x = Math.max(-45, Math.min(45, playerMesh.position.x));
+    playerMesh.position.z = Math.max(-28, Math.min(45, playerMesh.position.z));
+    if(mv.length()>0.001) playerMesh.rotation.y = Math.atan2(mv.x, mv.z);
+    playerMesh.position.y = 0.55 + Math.abs(Math.sin(Date.now()*0.009))*0.07;
+  }
+}
+
+function followCam(){
+  var ox = Math.sin(camYaw)*6;
+  var oz = Math.cos(camYaw)*6;
+  var tx = playerMesh.position.x + ox;
+  var ty = playerMesh.position.y + 4;
+  var tz = playerMesh.position.z + oz;
+  camera.position.lerp(new THREE.Vector3(tx,ty,tz), 0.1);
+  var look = playerMesh.position.clone().add(new THREE.Vector3(0,1,0));
+  camera.lookAt(look);
+}
+
+function checkZones(){
+  if(!myRole) return;
+  nearZone = null;
+  var px = playerMesh.position.x;
+  var pz = playerMesh.position.z;
+
+  zoneMeshes.forEach(function(zm){
+    var def = ZONES[zm.userData.key];
+    var dist = Math.sqrt(Math.pow(px-def.x,2)+Math.pow(pz-def.z,2));
+    if(dist < 3.5) nearZone = zm.userData.key;
+  });
+
+  var task = myRole.s[curScene];
+  var tzone = myRole['sz'+curScene];
+  var doneKey = curScene+'_'+tzone;
+
+  var hint = document.getElementById('hint');
+  var tbox = document.getElementById('taskBox');
+
+  if(nearZone && nearZone===tzone && !doneZones[doneKey]){
+    hint.classList.add('show');
+    tbox.classList.remove('show');
+  } else if(nearZone){
+    hint.classList.remove('show');
+    var def = ZONES[nearZone];
+    document.getElementById('tTitle').textContent = def.lbl;
+    document.getElementById('tDesc').textContent = (nearZone===tzone) ? task : 'Jouw doel: '+(def.lbl);
+    tbox.classList.add('show');
+  } else {
+    hint.classList.remove('show');
+    tbox.classList.remove('show');
+  }
+}
+
+function doInteract(){
+  if(!nearZone||!myRole) return;
+  var tzone = myRole['sz'+curScene];
+  var task = myRole.s[curScene];
+  if(nearZone!==tzone) return;
+  var doneKey = curScene+'_'+tzone;
+  if(doneZones[doneKey]) return;
+
+  doneZones[doneKey] = true;
+  document.getElementById('tTitle').textContent = '✅ Gedaan!';
+  document.getElementById('tDesc').textContent = task;
+  document.getElementById('taskBox').classList.add('show');
+  document.getElementById('hint').classList.remove('show');
+
+  var ok = document.getElementById('okBadge');
+  ok.classList.add('show');
+  setTimeout(function(){ ok.classList.remove('show'); },2500);
+  toast('✅ Opdracht voltooid!');
+
+  // Turn zone green
+  zoneMeshes.forEach(function(zm){
+    if(zm.userData.key===nearZone) zm.material.color.set(0x06d6a0);
+  });
+}
+
+function animZones(){
+  var t = Date.now()*0.002;
+  zoneMeshes.forEach(function(zm,i){
+    zm.material.opacity = 0.28 + Math.sin(t+i*1.2)*0.14;
+    zm.rotation.y += 0.005;
+  });
+}
+
+function updateOthers(positions){
+  // Remove gone players
+  Object.keys(otherMeshes).forEach(function(id){
+    if(!positions[id]){ scene.remove(otherMeshes[id]); delete otherMeshes[id]; }
+  });
+  // Add/update
+  Object.keys(positions).forEach(function(id){
+    if(myRole && id===myRole.id) return;
+    var pos = positions[id];
+    if(!otherMeshes[id]){
+      var mat = new THREE.MeshLambertMaterial({color:pos.col||0xaaaaaa});
+      var bGeo = new THREE.CylinderGeometry(0.38,0.38,1.1,8);
+      var hGeo = new THREE.SphereGeometry(0.35,8,8);
+      var b = new THREE.Mesh(bGeo,mat);
+      var h = new THREE.Mesh(hGeo,mat);
+      h.position.y = 0.95;
+      var g = new THREE.Group();
+      g.add(b); g.add(h);
+      scene.add(g);
+      otherMeshes[id] = g;
+    }
+    otherMeshes[id].position.set(pos.x, 0.55, pos.z);
+  });
+}
+
+function drawMinimap(){
+  var cv = document.getElementById('mmCanvas');
+  var ctx = cv.getContext('2d');
+  var W=80,H=80;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='rgba(8,18,40,0.9)';
+  ctx.fillRect(0,0,W,H);
+
+  // Zones
+  Object.keys(ZONES).forEach(function(k){
+    var def=ZONES[k];
+    var mx=(def.x+50)/100*W;
+    var mz=(def.z+30)/75*H;
+    ctx.fillStyle='rgba(255,255,255,0.2)';
+    ctx.beginPath(); ctx.arc(mx,mz,3.5,0,Math.PI*2); ctx.fill();
+  });
+
+  // Others
+  Object.values(otherMeshes).forEach(function(m){
+    var mx=(m.position.x+50)/100*W;
+    var mz=(m.position.z+30)/75*H;
+    ctx.fillStyle='#ccc';
+    ctx.beginPath(); ctx.arc(mx,mz,3,0,Math.PI*2); ctx.fill();
+  });
+
+  // Me
+  if(playerMesh){
+    var mx=(playerMesh.position.x+50)/100*W;
+    var mz=(playerMesh.position.z+30)/75*H;
+    var col = myRole ? '#'+myRole.col.toString(16).padStart(6,'0') : '#fff';
+    ctx.fillStyle=col;
+    ctx.beginPath(); ctx.arc(mx,mz,4.5,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
+  }
+}
+
+function changeScene(n){
+  var fade = document.getElementById('fadeover');
+  fade.classList.add('dark');
+  setTimeout(function(){
+    curScene = n;
+    doneZones = {};
+    document.getElementById('sceneLbl').textContent = SCENE_LBLS[n]||('Scène '+n);
+    // Reset zone colors
+    zoneMeshes.forEach(function(zm){
+      var def=ZONES[zm.userData.key];
+      if(def) zm.material.color.set(def.col);
+    });
+    if(myRole && myRole.s[n]){
+      toast('📋 Nieuwe opdracht: '+myRole.s[n]);
+    }
+    fade.classList.remove('dark');
+  }, 500);
+}
+</script>
+</body>
+</html>
