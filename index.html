@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Undercover op Ibiza</title>
+<style>
+:root{--sun:#FFB830;--coral:#FF5757;--sea:#00B4D8;--deep:#0A1628;--green:#06d6a0;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#0A1628;color:#fff;font-family:'Segoe UI',sans-serif;overflow:hidden;height:100vh;width:100vw;}
+.screen{display:none;position:absolute;inset:0;z-index:10;overflow-y:auto;flex-direction:column;align-items:center;justify-content:center;padding:20px;}
+.screen.active{display:flex;}
+.card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:24px 20px;max-width:420px;width:100%;text-align:center;}
+.card h1{font-size:clamp(22px,6vw,36px);background:linear-gradient(135deg,#FFB830,#FF5757);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;font-weight:900;}
+.card p{color:rgba(255,255,255,.6);font-size:14px;margin-bottom:14px;line-height:1.6;}
+.btn{display:block;width:100%;padding:13px;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:10px;transition:.15s;}
+.btn:hover{transform:translateY(-2px);}
+.btn-red{background:#FF5757;color:#fff;}
+.btn-blue{background:#00B4D8;color:#fff;}
+.btn-green{background:#06d6a0;color:#fff;}
+.btn-purple{background:#9b5de5;color:#fff;}
+.btn-orange{background:#FF8C00;color:#fff;}
+.btn-ghost{background:rgba(255,255,255,.1);color:rgba(255,255,255,.8);}
+.big-code{font-size:52px;font-weight:900;letter-spacing:10px;color:var(--sun);margin:10px 0;}
+input.ci{width:100%;background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2);border-radius:10px;padding:12px;color:#fff;font-size:18px;font-weight:800;text-align:center;letter-spacing:2px;outline:none;font-family:inherit;margin-bottom:12px;}
+input.ci:focus{border-color:var(--sun);}
+input.ci.code{font-size:22px;letter-spacing:6px;text-transform:uppercase;}
+.role-list{max-height:280px;overflow-y:auto;text-align:left;margin-bottom:14px;}
+.ri{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;cursor:pointer;border:2px solid transparent;margin-bottom:3px;transition:.15s;}
+.ri:hover{background:rgba(255,255,255,.08);}
+.ri.sel{border-color:var(--sun);background:rgba(255,184,48,.12);}
+.ri.taken{opacity:.3;pointer-events:none;}
+.ri .em{font-size:18px;flex-shrink:0;width:24px;}
+.ri .nm{font-size:13px;font-weight:700;}
+.ri .tp{font-size:10px;color:rgba(255,255,255,.35);}
+.pill{display:inline-flex;align-items:center;gap:5px;background:rgba(6,214,160,.15);border:1px solid var(--green);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;margin:3px;}
+.grp-lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.3);padding:8px 12px 2px;}
+#gameCanvas{position:absolute;inset:0;width:100%;height:100%;display:none;z-index:1;}
+#gameCanvas.active{display:block;}
+#hud{position:absolute;inset:0;z-index:5;display:none;pointer-events:none;}
+#hud.active{display:block;}
+#roleBadge{position:absolute;top:12px;left:12px;background:rgba(10,22,40,.92);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:7px 13px;font-size:12px;font-weight:700;}
+#sceneLbl{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:rgba(255,87,87,.92);border-radius:20px;padding:5px 14px;font-size:11px;font-weight:800;letter-spacing:1px;white-space:nowrap;max-width:55vw;overflow:hidden;text-overflow:ellipsis;}
+#minimap{position:absolute;top:50px;right:12px;width:85px;height:85px;background:rgba(10,22,40,.85);border:1px solid rgba(255,255,255,.2);border-radius:10px;overflow:hidden;}
+#progress{position:absolute;top:50px;left:12px;background:rgba(10,22,40,.85);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:6px 10px;font-size:11px;color:rgba(255,255,255,.7);}
+#taskBox{position:absolute;bottom:160px;left:50%;transform:translateX(-50%);background:rgba(10,22,40,.97);border:2px solid var(--sun);border-radius:16px;padding:13px 17px;max-width:300px;width:88%;text-align:center;opacity:0;transition:opacity .3s;pointer-events:none;}
+#taskBox.show{opacity:1;}
+#taskBox h3{color:var(--sun);font-size:13px;margin-bottom:4px;}
+#taskBox p{font-size:12px;color:rgba(255,255,255,.85);line-height:1.5;}
+#hint{position:absolute;bottom:160px;left:50%;transform:translateX(-50%);background:rgba(255,184,48,.2);border:2px solid var(--sun);border-radius:30px;padding:7px 18px;font-size:13px;font-weight:800;color:var(--sun);opacity:0;transition:opacity .3s;white-space:nowrap;}
+#hint.show{opacity:1;}
+#doneOverlay{position:absolute;inset:0;background:rgba(6,214,160,.15);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:7;opacity:0;pointer-events:none;transition:opacity .4s;text-align:center;padding:30px;backdrop-filter:blur(4px);}
+#doneOverlay.show{opacity:1;pointer-events:all;}
+#doneOverlay .big-em{font-size:64px;margin-bottom:12px;}
+#doneOverlay h2{font-size:28px;font-weight:900;color:var(--green);margin-bottom:8px;}
+#doneOverlay p{font-size:14px;color:rgba(255,255,255,.8);line-height:1.6;max-width:300px;}
+#doneOverlay .wm{margin-top:14px;font-size:12px;color:rgba(255,255,255,.45);}
+#sceneAnnounce{position:absolute;inset:0;background:rgba(10,22,40,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9;opacity:0;pointer-events:none;transition:opacity .4s;text-align:center;padding:30px;}
+#sceneAnnounce.show{opacity:1;pointer-events:all;}
+#sceneAnnounce .sn{font-size:11px;letter-spacing:3px;color:var(--sun);text-transform:uppercase;margin-bottom:8px;}
+#sceneAnnounce h2{font-size:clamp(18px,5vw,28px);font-weight:900;margin-bottom:10px;}
+#sceneAnnounce .sd{font-size:13px;color:rgba(255,255,255,.7);line-height:1.6;max-width:340px;margin-bottom:14px;}
+#sceneAnnounce .mt{background:rgba(255,184,48,.12);border:1px solid var(--sun);border-radius:12px;padding:12px 16px;max-width:340px;margin-bottom:18px;display:none;}
+#sceneAnnounce .mt .tl{font-size:10px;letter-spacing:1px;color:var(--sun);margin-bottom:4px;}
+#sceneAnnounce .mt p{font-size:13px;font-weight:700;}
+#fadeover{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .5s;z-index:8;}
+#fadeover.dark{opacity:1;}
+#hostHud{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:none;gap:8px;pointer-events:all;z-index:6;flex-wrap:wrap;justify-content:center;}
+#hostHud.active{display:flex;}
+#joy{position:absolute;bottom:20px;left:20px;width:100px;height:100px;display:none;pointer-events:all;z-index:6;}
+#joyBase{width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.18);position:relative;}
+#joyKnob{width:40px;height:40px;border-radius:50%;background:rgba(255,184,48,.85);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);}
+#eBnt{position:absolute;bottom:20px;right:20px;width:62px;height:62px;border-radius:50%;background:rgba(255,184,48,.9);border:none;font-size:22px;cursor:pointer;pointer-events:all;z-index:6;display:none;}
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%) translateY(70px);background:var(--deep);color:#fff;padding:10px 22px;border-radius:30px;font-size:13px;font-weight:700;transition:transform .3s;z-index:999;white-space:nowrap;}
+#toast.show{transform:translateX(-50%) translateY(0);}
+/* Custom role screen */
+#sCustom .big-emoji-pick{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:16px;max-height:180px;overflow-y:auto;}
+#sCustom .ep{font-size:28px;cursor:pointer;padding:6px;border-radius:8px;border:2px solid transparent;transition:.15s;}
+#sCustom .ep.sel{border-color:var(--sun);background:rgba(255,184,48,.15);}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div class="screen active" id="sHome">
+  <div class="card">
+    <h1>🌴 Undercover op Ibiza</h1>
+    <p>3D klasspel — 13 scènes, 33 personages</p>
+    <button class="btn btn-red" onclick="goHost()">🎬 Leerkracht — Host worden</button>
+    <button class="btn btn-blue" onclick="show('sJoin')">📱 Leerling — Verbinden</button>
+  </div>
+</div>
+
+<!-- HOST -->
+<div class="screen" id="sHost">
+  <div class="card">
+    <h1>🎬 Host</h1>
+    <p>Geef deze code aan de klas:</p>
+    <div class="big-code" id="hostCode">????</div>
+    <div id="hostPlayers" style="margin-bottom:10px;min-height:28px;"></div>
+    <div id="hostCount" style="font-size:13px;color:var(--green);margin-bottom:14px;">0 spelers verbonden</div>
+    <button class="btn btn-green" onclick="hostStart()">▶️ SPEL STARTEN</button>
+    <button class="btn btn-ghost" onclick="show('sHome')">← Terug</button>
+  </div>
+</div>
+
+<!-- JOIN -->
+<div class="screen" id="sJoin">
+  <div class="card">
+    <h1>📱 Verbinden</h1>
+    <p>Voer de gamecode in van de leerkracht</p>
+    <input class="ci code" id="joinInput" placeholder="CODE" maxlength="4" oninput="this.value=this.value.toUpperCase()">
+    <button class="btn btn-red" onclick="doJoin()">Verbinden →</button>
+    <button class="btn btn-ghost" onclick="show('sHome')">← Terug</button>
+  </div>
+</div>
+
+<!-- ROLE SELECT -->
+<div class="screen" id="sRole">
+  <div class="card">
+    <h1>🎭 Kies je personage</h1>
+    <p>Grijs = al bezet door iemand anders</p>
+    <div class="role-list" id="roleList"></div>
+    <button class="btn btn-orange" onclick="show('sCustom')" style="margin-bottom:6px">✏️ Zelfverzonnen personage</button>
+    <button class="btn btn-red" onclick="pickRole()">✓ Dit is mijn personage!</button>
+  </div>
+</div>
+
+<!-- CUSTOM ROLE -->
+<div class="screen" id="sCustom">
+  <div class="card">
+    <h1>✏️ Zelf verzinnen</h1>
+    <p>Geef je personage een naam en emoji</p>
+    <input class="ci" id="customName" placeholder="Naam van je personage" maxlength="20" style="letter-spacing:0;margin-bottom:10px;">
+    <div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:8px;">Kies een emoji:</div>
+    <div class="big-emoji-pick" id="emojiPick"></div>
+    <div style="font-size:13px;color:rgba(255,255,255,.5);margin:10px 0 6px;">Wat doe jij in het verhaal?</div>
+    <div id="customRoleOptions" style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px;"></div>
+    <!-- Assistent sub-keuze -->
+    <div id="assistantPick" style="display:none;margin-bottom:12px;">
+      <div style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:6px;">Assistent van wie?</div>
+      <div id="assistantList" style="max-height:180px;overflow-y:auto;"></div>
+    </div>
+    <button class="btn btn-orange" onclick="confirmCustom()">✓ Dit is mijn personage!</button>
+    <button class="btn btn-ghost" onclick="show('sRole')">← Terug naar lijst</button>
+  </div>
+</div>
+
+<!-- WAIT -->
+<div class="screen" id="sWait">
+  <div class="card">
+    <div style="font-size:40px">⏳</div>
+    <h1 style="font-size:20px;margin-top:10px" id="waitName">Wachten...</h1>
+    <p style="margin-bottom:12px">Wacht tot de leerkracht het spel start</p>
+    <div id="waitPlayers"></div>
+    <div id="waitStatus" style="font-size:12px;color:rgba(255,255,255,.35);margin-top:10px;"></div>
+  </div>
+</div>
+
+<!-- END -->
+<div class="screen" id="sEnd">
+  <div class="card">
+    <div style="font-size:56px">🎉</div>
+    <h1>Einde!</h1>
+    <p>Het avontuur op Ibiza is voorbij!</p>
+    <button class="btn btn-red" onclick="location.reload()" style="margin-top:10px">🔁 Opnieuw</button>
+  </div>
+</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<div id="hud">
+  <div id="roleBadge">–</div>
+  <div id="sceneLbl">–</div>
+  <div id="minimap"><canvas id="mmCanvas" width="85" height="85"></canvas></div>
+  <div id="progress">– klaar</div>
+  <div id="taskBox"><h3 id="tTitle">–</h3><p id="tDesc">–</p></div>
+  <div id="hint">Druk E of tik 👆</div>
+  <div id="doneOverlay">
+    <div class="big-em">✅</div>
+    <h2>Opdracht voltooid!</h2>
+    <p id="doneTask">–</p>
+    <div class="wm" id="doneWait">Wachten op klasgenoten...</div>
+  </div>
+  <div id="sceneAnnounce">
+    <div class="sn" id="saNum">–</div>
+    <h2 id="saName">–</h2>
+    <div class="sd" id="saDesc">–</div>
+    <div class="mt" id="saTask"><div class="tl">JOUW OPDRACHT</div><p id="saTaskText">–</p></div>
+    <button class="btn btn-red" style="max-width:200px" onclick="closeAnnounce()">Spelen! →</button>
+  </div>
+  <div id="fadeover"></div>
+  <div id="hostHud">
+    <button class="btn btn-green" style="width:auto;padding:10px 16px;" onclick="hostNext()">⏭️ Volgende scène</button>
+    <button class="btn btn-purple" style="width:auto;padding:10px 16px;" onclick="hostPrev()">⏮️ Vorige</button>
+    <button class="btn btn-red" style="width:auto;padding:10px 16px;" onclick="location.reload()">✕</button>
+  </div>
+  <div id="joy"><div id="joyBase"><div id="joyKnob"></div></div></div>
+  <button id="eBnt" onclick="doInteract()">👆</button>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ============================================================
+// SUPABASE
+// ============================================================
+var SUPA_URL='https://iehrsudivxhjvwbribbu.supabase.co';
+var SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllaHJzdWRpdnhoanZ3YnJpYmJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwODgwNzcsImV4cCI6MjA5NjY2NDA3N30.a2GzUe-THn5gcQ3hyo8ZzsFg-0Irr6g--L0eMWYmOOs';
+
+function sbReq(method,path,body){
+  return fetch(SUPA_URL+'/rest/v1/'+path,{
+    method:method,
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
+    body:body?JSON.stringify(body):undefined
+  }).then(function(r){
+    if(!r.ok) return r.text().then(function(t){throw new Error(t);});
+    var ct=r.headers.get('content-type');
+    return ct&&ct.includes('json')?r.json():r.text();
+  });
+}
+
+function getState(code,cb){
+  sbReq('GET','game_state?code=eq.'+code+'&select=data').then(function(rows){
+    cb(rows&&rows.length>0?rows[0].data:null);
+  }).catch(function(e){console.error('getState',e);cb(null);});
+}
+
+function setState(code,data,cb){
+  sbReq('POST','game_state',{code:code,data:data}).then(function(){if(cb)cb();}).catch(function(e){console.error('setState',e);if(cb)cb();});
+}
+
+function updateState(code,patch,cb){
+  getState(code,function(cur){
+    var next=cur||{};
+    Object.keys(patch).forEach(function(k){next[k]=patch[k];});
+    setState(code,next,cb);
+  });
+}
+
+// ============================================================
+// SCENES
+// ============================================================
+var SCENES=[
+  {id:'1',  lbl:'SCÈNE 1',  name:'Grijp die Prijs!',         map:'quiz',   desc:'Nick Slick presenteert de grote quiz! Familie Brokken wint een reis naar Ibiza!'},
+  {id:'2a', lbl:'SCÈNE 2A', name:'Aankomst Roze Flamingo',   map:'resort', desc:'Familie Brokken arriveert — maar er is geen kamer gereserveerd!'},
+  {id:'2b', lbl:'SCÈNE 2B', name:'Rosa grijpt in',           map:'resort', desc:'Rosa heeft ze snel door. Ger verzint plan: voordoen als personeel!'},
+  {id:'3a', lbl:'SCÈNE 3A', name:'In de spa',                map:'resort', desc:'Puk ruilt het gezichtsmasker voor verf. Rustenburg-zusters schrikken!'},
+  {id:'3b', lbl:'SCÈNE 3B', name:'Agent O bestelt hamburger',map:'resort', desc:'Agent O bestelt via Manuel een hamburger bij de lobby.'},
+  {id:'3c', lbl:'SCÈNE 3C', name:'Het plan!',                map:'resort', desc:'Ger bedenkt plan: voordoen als personeel om kamer vrij te maken!'},
+  {id:'4',  lbl:'SCÈNE 4',  name:'Slechte service!',         map:'resort', desc:'Familie Brokken werkt als personeel — opzettelijk slecht!'},
+  {id:'5a', lbl:'SCÈNE 5A', name:'Verstopt in de spa',       map:'resort', desc:'Ger, Ellen en Puk horen in de spa: Koning Lomp komt op bezoek!'},
+  {id:'5b', lbl:'SCÈNE 5B', name:'Undercover als Lomp!',     map:'resort', desc:'Ger doet zich voor als Lomp, Ellen als Millennia!'},
+  {id:'6',  lbl:'SCÈNE 6',  name:'Jack Turbo arriveert',     map:'resort', desc:'Kapitein Jack Turbo en stewardessen Jessy en Dessy komen aan!'},
+  {id:'7a', lbl:'SCÈNE 7A', name:'De echte Lomp!',           map:'resort', desc:'De echte Lomp arriveert — er zijn nu twee Lompen!'},
+  {id:'7b', lbl:'SCÈNE 7B', name:'De grote dans!',           map:'resort', desc:'Welkomstdans! Agenten duiken op: "Bukken!"'},
+  {id:'8',  lbl:'SCÈNE 8',  name:'De grote onthulling!',     map:'resort', desc:'De waarheid komt aan het licht! Nick Slick is Jack Turbo!'},
+];
+
+var ZONES={
+  quizstage:{x:0,  z:-10,col:0xFFB830,lbl:'🎤 Podium',   r:5,map:'quiz'},
+  quizaud:  {x:0,  z:10, col:0x9b5de5,lbl:'🪑 Publiek',  r:5,map:'quiz'},
+  // INDOOR zones (inside the hotel building, x: -16 to 16, z: -16 to 16)
+  lobby:    {x:0,  z:4,  col:0x00B4D8,lbl:'🛎️ Lobby',   r:4,map:'resort',indoor:true},
+  spa:      {x:-11,z:-8, col:0x06d6a0,lbl:'💆 Spa',      r:3.2,map:'resort',indoor:true},
+  bar:      {x:11, z:-8, col:0xFF5757,lbl:'🍹 Bar',       r:3.2,map:'resort',indoor:true},
+  throne:   {x:0,  z:-11,col:0xFFD700,lbl:'👑 Koninklijke Suite',r:3.5,map:'resort',indoor:true},
+  // OUTDOOR zones (on grass ring 22-34, beach ring 34-52)
+  entrance: {x:0,  z:19, col:0x9b5de5,lbl:'🚪 Ingang',   r:3.5,map:'resort',indoor:false},
+  pool:     {x:24, z:0,  col:0x0096c7,lbl:'🏊 Zwembad',  r:7,map:'resort',indoor:false},
+  beach:    {x:0,  z:42, col:0xFFD700,lbl:'🏖️ Strand',  r:7,map:'resort',indoor:false},
+  stage:    {x:-24,z:14, col:0xFFB830,lbl:'🎤 Podium',   r:5,map:'resort',indoor:false},
+};
+
+// ============================================================
+// ALL 33 ROLES
+// ============================================================
+var ROLES=[
+  // FAMILIE BROKKEN
+  {id:'ger',    name:'Ger Brokken',        emoji:'👨',type:'Familie Brokken', bc:0x3366CC,hc:0xFFCBA4,hair:0x4A3000,acc:'none',
+   sc:{'1':{t:'Doe mee aan de quiz bij het podium!',z:'quizstage'},'2a':{t:'Geen kamer! Verbaasd bij de lobby.',z:'lobby'},'2b':{t:'Verzin plan bij de lobby!',z:'lobby'},'3a':{t:'Wacht bij de ingang.',z:'entrance'},'3b':{t:'Nep-ober bij de lobby!',z:'lobby'},'3c':{t:'Bedenk het plan bij de lobby!',z:'lobby'},'4':{t:'Slechte service bij de lobby!',z:'lobby'},'5a':{t:'Verstop je in de spa!',z:'spa'},'5b':{t:'Jij bent Lomp! Ga naar de Koninklijke Suite!',z:'throne'},'6':{t:'Charme als Lomp bij de Koninklijke Suite!',z:'throne'},'7a':{t:'Blijf in karakter bij de lobby!',z:'lobby'},'7b':{t:'Bukken bij het podium!',z:'stage'},'8':{t:'Onthul de waarheid bij het podium!',z:'stage'}}},
+  {id:'ellen',  name:'Ellen Brokken',      emoji:'👩',type:'Familie Brokken', bc:0xFF69B4,hc:0xFFCBA4,hair:0xCC6600,acc:'none',
+   sc:{'1':{t:'Zenuwachtig bij het podium!',z:'quizstage'},'2a':{t:'Geschokt bij de lobby.',z:'lobby'},'2b':{t:'Ga mee met plan bij lobby.',z:'lobby'},'3a':{t:'Wacht bij de ingang.',z:'entrance'},'3b':{t:'Nep-ober bij de lobby!',z:'lobby'},'3c':{t:'Akkoord met plan bij lobby.',z:'lobby'},'4':{t:'Slechte service bij lobby!',z:'lobby'},'5a':{t:'Verstop je in de spa!',z:'spa'},'5b':{t:'Jij bent Millennia! Koninklijke Suite!',z:'throne'},'6':{t:'Millennia bij Koninklijke Suite!',z:'throne'},'7a':{t:'Nep-Millennia bij lobby!',z:'lobby'},'7b':{t:'Bukken bij podium!',z:'stage'},'8':{t:'Opgelucht bij de ingang!',z:'entrance'}}},
+  {id:'puk',    name:'Puk Brokken',        emoji:'🧒',type:'Familie Brokken', bc:0x9B59B6,hc:0xFFCBA4,hair:0x2C3E50,acc:'none',
+   sc:{'1':{t:'"Ik ga stuk." Verveeld bij podium.',z:'quizstage'},'2a':{t:'Ogen rollen bij lobby.',z:'lobby'},'2b':{t:'Aarzelend mee bij lobby.',z:'lobby'},'3a':{t:'Masker voor verf! Ga naar spa!',z:'spa'},'3b':{t:'Nep-ober bij lobby!',z:'lobby'},'3c':{t:'"Ik ga stuk." Maar ga mee bij lobby.',z:'lobby'},'4':{t:'Saboteer alles bij lobby!',z:'lobby'},'5a':{t:'Verstop je in de spa!',z:'spa'},'5b':{t:'Mee naar Koninklijke Suite.',z:'throne'},'6':{t:'Kijk toe bij Koninklijke Suite.',z:'throne'},'7a':{t:'Mee naar lobby.',z:'lobby'},'7b':{t:'"Ik ga NU stuk!" Podium!',z:'stage'},'8':{t:'Naar het strand — rust!',z:'beach'}}},
+  // PRESENTATOREN
+  {id:'nickJack',name:'Nick Slick / Jack Turbo',emoji:'🎤',type:'Presentator', bc:0xF39C12,hc:0xFFCBA4,hair:0x000000,acc:'mic',
+   sc:{'1':{t:'Presenteer quiz bij podium!',z:'quizstage'},'2a':{t:'Jack Turbo bij de bar!',z:'bar'},'2b':{t:'Charme iedereen bij de bar!',z:'bar'},'3a':{t:'Bar.',z:'bar'},'3b':{t:'Nonchalant bij de bar.',z:'bar'},'3c':{t:'Bar.',z:'bar'},'4':{t:'Bar.',z:'bar'},'5a':{t:'Bar.',z:'bar'},'5b':{t:'Ze verdenken je! Extra nonchalant bij bar!',z:'bar'},'6':{t:'Bar.',z:'bar'},'7a':{t:'Ze weten het bijna! Bar!',z:'bar'},'7b':{t:'Excuses bij podium!',z:'stage'},'8':{t:'Grote onthulling: je bent Nick Slick! Podium!',z:'stage'}}},
+  {id:'leontien',name:'Leontien',           emoji:'🌟',type:'Quiz Assistentes',bc:0xE91E8C,hc:0xFFCBA4,hair:0xFFD700,acc:'none',
+   sc:{'1':{t:'Kondig de prijzen aan bij het podium!',z:'quizstage'},'2a':{t:'Wacht bij de ingang.',z:'entrance'},'2b':{t:'Ingang.',z:'entrance'},'3a':{t:'Ingang.',z:'entrance'},'3b':{t:'Ingang.',z:'entrance'},'3c':{t:'Ingang.',z:'entrance'},'4':{t:'Ingang.',z:'entrance'},'5a':{t:'Ingang.',z:'entrance'},'5b':{t:'Ingang.',z:'entrance'},'6':{t:'Ingang.',z:'entrance'},'7a':{t:'Lobby.',z:'lobby'},'7b':{t:'Podium!',z:'stage'},'8':{t:'Kondig het einde aan bij podium!',z:'stage'}}},
+  {id:'justien', name:'Justien',            emoji:'🌟',type:'Quiz Assistentes',bc:0xC2185B,hc:0xFFCBA4,hair:0xFFAA00,acc:'none',
+   sc:{'1':{t:'Wijs enthousiast naar de prijzen bij podium!',z:'quizstage'},'2a':{t:'Wacht bij de ingang.',z:'entrance'},'2b':{t:'Ingang.',z:'entrance'},'3a':{t:'Ingang.',z:'entrance'},'3b':{t:'Ingang.',z:'entrance'},'3c':{t:'Ingang.',z:'entrance'},'4':{t:'Ingang.',z:'entrance'},'5a':{t:'Ingang.',z:'entrance'},'5b':{t:'Ingang.',z:'entrance'},'6':{t:'Ingang.',z:'entrance'},'7a':{t:'Lobby.',z:'lobby'},'7b':{t:'Podium!',z:'stage'},'8':{t:'Grote buiging bij podium!',z:'stage'}}},
+  // RESORT
+  {id:'rosa',   name:'Rosa',               emoji:'🌹',type:'Resort',          bc:0xFF1493,hc:0xFFCBA4,hair:0x1a0000,acc:'none',
+   sc:{'1':{t:'Wacht bij publiek.',z:'quizaud'},'2a':{t:'Observeer bij lobby.',z:'lobby'},'2b':{t:'Grijp in bij lobby!',z:'lobby'},'3a':{t:'Patrouilleer bij lobby.',z:'lobby'},'3b':{t:'Let op gasten bij lobby.',z:'lobby'},'3c':{t:'Houd lobby in de gaten.',z:'lobby'},'4':{t:'Betrap nep-personeel bij lobby!',z:'lobby'},'5a':{t:'Controleer de spa!',z:'spa'},'5b':{t:'Observeer bij Koninklijke Suite.',z:'throne'},'6':{t:'Houd de Koninklijke Suite in de gaten.',z:'throne'},'7a':{t:'Twee Lompen?! Lobby!',z:'lobby'},'7b':{t:'Regisseer chaos bij podium.',z:'stage'},'8':{t:'Onthul alles bij podium!',z:'stage'}}},
+  {id:'manuel', name:'Manuel',             emoji:'🛎️',type:'Resort',          bc:0x1ABC9C,hc:0xFFCBA4,hair:0x000000,acc:'mic',
+   sc:{'1':{t:'Wacht bij publiek.',z:'quizaud'},'2a':{t:'Kondig gasten aan bij lobby!',z:'lobby'},'2b':{t:'Kondig Brokkens aan bij lobby.',z:'lobby'},'3a':{t:'Zoek dweil bij lobby!',z:'lobby'},'3b':{t:'Breng hamburger naar lobby!',z:'lobby'},'3c':{t:'Dweil kwijt bij lobby!',z:'lobby'},'4':{t:'Verward door nep-personeel bij lobby.',z:'lobby'},'5a':{t:'Dweil zoeken bij spa!',z:'spa'},'5b':{t:'Kondig Lomp aan bij Koninklijke Suite!',z:'throne'},'6':{t:'Verwar twee Lompen bij Koninklijke Suite!',z:'throne'},'7a':{t:'Sleutelkaart bij lobby!',z:'lobby'},'7b':{t:'Organiseer dans bij podium!',z:'stage'},'8':{t:'Kondig onthulling aan bij podium!',z:'stage'}}},
+  // RUSTENBURG
+  {id:'camilla',name:'Camilla Rustenburg', emoji:'🧘',type:'Rustenburg Zusters',bc:0xBEDCF5,hc:0xFFCBA4,hair:0x5D3A1A,acc:'none',
+   sc:{'1':{t:'Wacht bij publiek.',z:'quizaud'},'2a':{t:'Spa voor rust!',z:'spa'},'2b':{t:'Klaag in spa!',z:'spa'},'3a':{t:'Masker opsmeren in spa!',z:'spa'},'3b':{t:'VERF! Ren uit spa!',z:'spa'},'3c':{t:'Buiten adem bij ingang.',z:'entrance'},'4':{t:'Herstel bij ingang.',z:'entrance'},'5a':{t:'Bananenboot bij strand!',z:'beach'},'5b':{t:'Wild haar op strand!',z:'beach'},'6':{t:'Strand!',z:'beach'},'7a':{t:'Aanrennen bij lobby!',z:'lobby'},'7b':{t:'Dans bij podium!',z:'stage'},'8':{t:'"Beste vakantie ooit!" Podium!',z:'stage'}}},
+  {id:'ruth',   name:'Ruth Rustenburg',    emoji:'🧘',type:'Rustenburg Zusters',bc:0xA9D8E7,hc:0xFFCBA4,hair:0x7D3C18,acc:'none',
+   sc:{'1':{t:'Wacht bij publiek.',z:'quizaud'},'2a':{t:'Spa voor rust.',z:'spa'},'2b':{t:'Klaag in spa.',z:'spa'},'3a':{t:'Masker in spa.',z:'spa'},'3b':{t:'Verf! Ren! Spa!',z:'spa'},'3c':{t:'Terug bij ingang.',z:'entrance'},'4':{t:'Herstel bij ingang.',z:'entrance'},'5a':{t:'Bananenboot bij strand!',z:'beach'},'5b':{t:'Stiekem dansen op strand!',z:'beach'},'6':{t:'Strand!',z:'beach'},'7a':{t:'Aanrennen bij lobby!',z:'lobby'},'7b':{t:'Dans bij podium!',z:'stage'},'8':{t:'Geef toe bij podium!',z:'stage'}}},
+  // BADMEESTERS
+  {id:'ronBom', name:'Ron Bommetje',        emoji:'🏊',type:'Badmeesters',     bc:0x0077B6,hc:0xFFCBA4,hair:0xDDB892,acc:'none',
+   sc:{'1':{t:'Wacht bij publiek.',z:'quizaud'},'2a':{t:'Patrouilleer bij zwembad!',z:'pool'},'2b':{t:'Fluit bij zwembad!',z:'pool'},'3a':{t:'Zwembad.',z:'pool'},'3b':{t:'Geen bommetje! Zwembad!',z:'pool'},'3c':{t:'Zwembad.',z:'pool'},'4':{t:'Zwembad.',z:'pool'},'5a':{t:'Strand.',z:'beach'},'5b':{t:'Strand.',z:'beach'},'6':{t:'Strand.',z:'beach'},'7a':{t:'Lobby.',z:'lobby'},'7b':{t:'Podium.',z:'stage'},'8':{t:'"Agent O was de slechtste zwemmer." Podium!',z:'stage'}}},
+  {id:'tonBom', name:'Ton Bommetje',         emoji:'🤿',type:'Badmeesters',     bc:0x0096C7,hc:0xFFCBA4,hair:0xAA8844,acc:'none',
+   sc:{'1':{t:'Wacht bij publiek.',z:'quizaud'},'2a':{t:'Zwembad!',z:'pool'},'2b':{t:'Zwembad!',z:'pool'},'3a':{t:'Zwembad.',z:'pool'},'3b':{t:'Zwembad.',z:'pool'},'3c':{t:'Zwembad.',z:'pool'},'4':{t:'Zwembad.',z:'pool'},'5a':{t:'Strand.',z:'beach'},'5b':{t:'Bananenboot zien bij strand!',z:'beach'},'6':{t:'Strand.',z:'beach'},'7a':{t:'Lobby.',z:'lobby'},'7b':{t:'Podium.',z:'stage'},'8':{t:'Feliciteer iedereen bij podium.',z:'stage'}}},
+  // PARTY GIRLS
+  {id:'fanny',  name:'Fanny',              emoji:'🪩',type:'Party Girls',     bc:0x8E44AD,hc:0xFFCBA4,hair:0xFFD700,acc:'none',
+   sc:{'1':{t:'Wacht bij publiek.',z:'quizaud'},'2a':{t:'Energie bij ingang!',z:'entrance'},'2b':{t:'Feest bij lobby!',z:'lobby'},'3a':{t:'Zwembad!',z:'pool'},'3b':{t:'Zwembad!',z:'pool'},'3c':{t:'Zwembad!',z:'pool'},'4':{t:'Zwembad!',z:'pool'},'5a':{t:'Strand!',z:'beach'},'5b':{t:'Strand!',z:'beach'},'6':{t:'Strand!',z:'beach'},'7a':{t:'Welkomstdans bij lobby!',z:'lobby'},'7b':{t:'Leid dans bij podium!',z:'stage'},'8':{t:'Slotdans bij podium!',z:'stage'}}},
+  {id:'roxy',   name:'Roxy',              emoji:'🕺',type:'Party Girls',     bc:0x6C3483,hc:0xFFCBA4,hair:0xFF6600,acc:'none',
+   sc:{'1':{t:'Wacht bij publiek.',z:'quizaud'},'2a':{t:'Seventies entree bij ingang!',z:'entrance'},'2b':{t:'Disco bij lobby!',z:'lobby'},'3a':{t:'Zwembad!',z:'pool'},'3b':{t:'Zwembad!',z:'pool'},'3c':{t:'Zwembad!',z:'pool'},'4':{t:'Zwembad!',z:'pool'},'5a':{t:'Strand!',z:'beach'},'5b':{t:'Strand!',z:'beach'},'6':{t:'Strand!',z:'beach'},'7a':{t:'Lobby!',z:'lobby'},'7b':{t:'"Disco never dies!" Podium!',z:'stage'},'8':{t:'Podium!',z:'stage'}}},
+  {id:'indy',   name:'Indy',              emoji:'🌺',type:'Party Girls',     bc:0xE74C3C,hc:0xFFCBA4,hair:0x000000,acc:'none',
+   sc:{'1':{t:'Wacht bij publiek.',z:'quizaud'},'2a':{t:'Tropische entree bij ingang!',z:'entrance'},'2b':{t:'Tropisch bij lobby!',z:'lobby'},'3a':{t:'Zwembad!',z:'pool'},'3b':{t:'Zwembad!',z:'pool'},'3c':{t:'Zwembad!',z:'pool'},'4':{t:'Zwembad!',z:'pool'},'5a':{t:'Strand!',z:'beach'},'5b':{t:'Strand!',z:'beach'},'6':{t:'Strand!',z:'beach'},'7a':{t:'Lobby!',z:'lobby'},'7b':{t:'Tropische beat bij podium!',z:'stage'},'8':{t:'Podium!',z:'stage'}}},
+  {id:'ivy',    name:'Ivy',               emoji:'🤍',type:'Party Girls',     bc:0xECF0F1,hc:0xFFCBA4,hair:0xBDC3C7,acc:'none',
+   sc:{'1':{t:'Wacht bij publiek.',z:'quizaud'},'2a':{t:'Chique entree bij ingang.',z:'entrance'},'2b':{t:'Stijlvol bij lobby.',z:'lobby'},'3a':{t:'Zwembad.',z:'pool'},'3b':{t:'Stijltip geven bij zwembad.',z:'pool'},'3c':{t:'Zwembad.',z:'pool'},'4':{t:'Zwembad.',z:'pool'},'5a':{t:'Strand.',z:'beach'},'5b':{t:'Strand.',z:'beach'},'6':{t:'Strand.',z:'beach'},'7a':{t:'Lobby.',z:'lobby'},'7b':{t:'In wit bij podium!',z:'stage'},'8':{t:'Knik goedkeurend bij podium.',z:'stage'}}},
+  {id:'goldy',  name:'Goldy',             emoji:'✨',type:'Party Girls',     bc:0xF39C12,hc:0xFFCBA4,hair:0xFFD700,acc:'none',
+   sc:{'1':{t:'Wacht bij publiek.',z:'quizaud'},'2a':{t:'Gouden entree bij ingang!',z:'entrance'},'2b':{t:'Goud bij lobby!',z:'lobby'},'3a':{t:'Zwembad!',z:'pool'},'3b':{t:'Glitter bij zwembad!',z:'pool'},'3c':{t:'Zwembad!',z:'pool'},'4':{t:'Zwembad!',z:'pool'},'5a':{t:'Strand!',z:'beach'},'5b':{t:'Strand!',z:'beach'},'6':{t:'Strand!',z:'beach'},'7a':{t:'Gouden welkomst bij lobby!',z:'lobby'},'7b':{t:'Goud bij podium!',z:'stage'},'8':{t:'Eis confetti bij podium!',z:'stage'}}},
+  {id:'jenny',  name:'Jenny',             emoji:'🧡',type:'Party Girls',     bc:0xFF6600,hc:0xFFCBA4,hair:0xFF0000,acc:'none',
+   sc:{'1':{t:'Wacht bij publiek.',z:'quizaud'},'2a':{t:'Hollandse entree bij ingang!',z:'entrance'},'2b':{t:'Vraag bitterballen bij lobby.',z:'lobby'},'3a':{t:'Zwembad!',z:'pool'},'3b':{t:'Zwembad!',z:'pool'},'3c':{t:'Zwembad!',z:'pool'},'4':{t:'Zwembad!',z:'pool'},'5a':{t:'Strand!',z:'beach'},'5b':{t:'Strand!',z:'beach'},'6':{t:'Strand!',z:'beach'},'7a':{t:'Hollandse dans bij lobby!',z:'lobby'},'7b':{t:'"Proost!" Podium!',z:'stage'},'8':{t:'Podium!',z:'stage'}}},
+  // KONINKLIJK
+  {id:'koningLomp',name:'Koning Lomp',    emoji:'👑',type:'Koninklijk',      bc:0xD4AC0D,hc:0xFFCBA4,hair:0xC0C0C0,acc:'crown',
+   sc:{'1':{t:'Wacht bij publiek.',z:'quizaud'},'2a':{t:'Wacht bij ingang.',z:'entrance'},'2b':{t:'Wacht bij ingang.',z:'entrance'},'3a':{t:'Wacht bij ingang.',z:'entrance'},'3b':{t:'Wacht bij ingang.',z:'entrance'},'3c':{t:'Wacht bij ingang.',z:'entrance'},'4':{t:'Wacht bij ingang.',z:'entrance'},'5a':{t:'Wacht bij ingang.',z:'entrance'},'5b':{t:'Wacht bij ingang — er is een neploper!',z:'entrance'},'6':{t:'WOEDEND de Koninklijke Suite in!',z:'throne'},'7a':{t:'Eis opheldering bij lobby!',z:'lobby'},'7b':{t:'Kijk toe bij podium.',z:'stage'},'8':{t:'Eis verontschuldiging bij podium!',z:'stage'}}},
+  {id:'millennia',name:'Millennia',       emoji:'👸',type:'Koninklijk',      bc:0xF7DC6F,hc:0xFFCBA4,hair:0xAA8800,acc:'crown',
+   sc:{'1':{t:'Wacht bij publiek.',z:'quizaud'},'2a':{t:'Wacht bij ingang.',z:'entrance'},'2b':{t:'Wacht bij ingang.',z:'entrance'},'3a':{t:'Wacht bij ingang.',z:'entrance'},'3b':{t:'Wacht bij ingang.',z:'entrance'},'3c':{t:'Wacht bij ingang.',z:'entrance'},'4':{t:'Wacht bij ingang.',z:'entrance'},'5a':{t:'Wacht bij ingang.',z:'entrance'},'5b':{t:'Wacht bij ingang.',z:'entrance'},'6':{t:'Deftig de Koninklijke Suite in!',z:'throne'},'7a':{t:'Sleutelkaart bij lobby!',z:'lobby'},'7b':{t:'Zwaaien bij podium!',z:'stage'},'8':{t:'Chic zwaaien bij podium!',z:'stage'}}},
+  // AGENTEN
+  {id:'agentO', name:'Agent O',           emoji:'🕵️',type:'Agenten',         bc:0x2C3E50,hc:0xFFCBA4,hair:0x111111,acc:'glasses',
+   sc:{'1':{t:'Wacht bij publiek.',z:'quizaud'},'2a':{t:'Mysterieus bij ingang.',z:'entrance'},'2b':{t:'Scan lobby.',z:'lobby'},'3a':{t:'Bel contactpersoon bij lobby.',z:'lobby'},'3b':{t:'Hamburger eten bij lobby!',z:'lobby'},'3c':{t:'Mysterieus bij lobby.',z:'lobby'},'4':{t:'Lobby in de gaten.',z:'lobby'},'5a':{t:'Bewijk spa van buitenaf.',z:'spa'},'5b':{t:'Bescherm Lomp bij Koninklijke Suite.',z:'throne'},'6':{t:'Reageer op elke "O" bij Koninklijke Suite!',z:'throne'},'7a':{t:'Twee Lompen?! Lobby!',z:'lobby'},'7b':{t:'Onthul missie bij podium!',z:'stage'},'8':{t:'Podium.',z:'stage'}}},
+  {id:'agentA', name:'Agent A',           emoji:'🕶️',type:'Agenten',         bc:0x1C2833,hc:0xFFCBA4,hair:0x111111,acc:'glasses',
+   sc:{'1':{t:'Wacht bij publiek.',z:'quizaud'},'2a':{t:'Controleer ingang.',z:'entrance'},'2b':{t:'Scan lobby.',z:'lobby'},'3a':{t:'Patrouilleer bij ingang.',z:'entrance'},'3b':{t:'Lobby.',z:'lobby'},'3c':{t:'Lobby.',z:'lobby'},'4':{t:'Lobby.',z:'lobby'},'5a':{t:'Bewijk spa.',z:'spa'},'5b':{t:'Bescherm Koninklijke Suite.',z:'throne'},'6':{t:'Koninklijke Suite.',z:'throne'},'7a':{t:'Lobby.',z:'lobby'},'7b':{t:'BUKKEN! Podium!',z:'stage'},'8':{t:'In de houding bij podium.',z:'stage'}}},
+  {id:'agentC', name:'Agent C',           emoji:'🕶️',type:'Agenten',         bc:0x212F3C,hc:0xFFCBA4,hair:0x111111,acc:'glasses',
+   sc:{'1':{t:'Wacht bij publiek.',z:'quizaud'},'2a':{t:'Dubbel controleren bij ingang.',z:'entrance'},'2b':{t:'Lobby veilig.',z:'lobby'},'3a':{t:'Patrouilleer bij ingang.',z:'entrance'},'3b':{t:'Radio bij lobby.',z:'lobby'},'3c':{t:'Lobby.',z:'lobby'},'4':{t:'Lobby.',z:'lobby'},'5a':{t:'Bewijk spa.',z:'spa'},'5b':{t:'Koninklijke Suite veilig.',z:'throne'},'6':{t:'Koninklijke Suite.',z:'throne'},'7a':{t:'Clear! Lobby!',z:'lobby'},'7b':{t:'BUKKEN! Podium!',z:'stage'},'8':{t:'"Situatie onder controle." Podium.',z:'stage'}}},
+  {id:'agentT', name:'Agent T',           emoji:'🕶️',type:'Agenten',         bc:0x2E4053,hc:0xFFCBA4,hair:0x111111,acc:'glasses',
+   sc:{'1':{t:'Wacht bij publiek.',z:'quizaud'},'2a':{t:'Nerveus bij ingang.',z:'entrance'},'2b':{t:'Nerveus bij lobby.',z:'lobby'},'3a':{t:'Patrouilleer bij ingang.',z:'entrance'},'3b':{t:'Foute signaalwoord bij lobby!',z:'lobby'},'3c':{t:'Lobby.',z:'lobby'},'4':{t:'Lobby.',z:'lobby'},'5a':{t:'Nerveus bij spa.',z:'spa'},'5b':{t:'Koninklijke Suite.',z:'throne'},'6':{t:'Koninklijke Suite.',z:'throne'},'7a':{t:'Snel naar lobby!',z:'lobby'},'7b':{t:'BUKKEN! Podium!',z:'stage'},'8':{t:'Eerste missie! Podium!',z:'stage'}}},
+  {id:'agentX', name:'Agent X',           emoji:'🕶️',type:'Agenten',         bc:0x0B0B0B,hc:0xFFCBA4,hair:0x111111,acc:'glasses',
+   sc:{'1':{t:'Wacht bij publiek.',z:'quizaud'},'2a':{t:'Loop binnen. Zeg niets. Ingang.',z:'entrance'},'2b':{t:'Kijk iedereen aan bij lobby. Loop weg.',z:'lobby'},'3a':{t:'Ingang.',z:'entrance'},'3b':{t:'Knik wijs bij elke zin. Lobby.',z:'lobby'},'3c':{t:'Lobby.',z:'lobby'},'4':{t:'Lobby.',z:'lobby'},'5a':{t:'Spa — zeg niets.',z:'spa'},'5b':{t:'Koninklijke Suite — geen woord.',z:'throne'},'6':{t:'Koninklijke Suite.',z:'throne'},'7a':{t:'Lobby.',z:'lobby'},'7b':{t:'BUKKEN! Podium!',z:'stage'},'8':{t:'Onthul het geheimste geheim. Zeg het niet. Podium.',z:'stage'}}},
+  {id:'agentU', name:'Agent U',           emoji:'🕶️',type:'Agenten',         bc:0x17202A,hc:0xFFCBA4,hair:0x111111,acc:'glasses',
+   sc:{'1':{t:'Wacht bij publiek.',z:'quizaud'},'2a':{t:'Blokkeer ingang!',z:'entrance'},'2b':{t:'Lobby.',z:'lobby'},'3a':{t:'Ingang.',z:'entrance'},'3b':{t:'Sta midden in lobby. Doe niets.',z:'lobby'},'3c':{t:'Lobby.',z:'lobby'},'4':{t:'Lobby.',z:'lobby'},'5a':{t:'Spa.',z:'spa'},'5b':{t:'Koninklijke Suite.',z:'throne'},'6':{t:'Koninklijke Suite.',z:'throne'},'7a':{t:'Lobby.',z:'lobby'},'7b':{t:'BUKKEN! Podium!',z:'stage'},'8':{t:'Kondig jezelf als held aan. Podium!',z:'stage'}}},
+  // SPA
+  {id:'jasmijn',name:'Jasmijn',           emoji:'💆',type:'Spa',             bc:0x27AE60,hc:0xFFCBA4,hair:0x8B0000,acc:'none',
+   sc:{'1':{t:'Wacht bij het publiek in de quizshow.',z:'quizaud'},'2a':{t:'Verwelkom gasten in spa!',z:'spa'},'2b':{t:'Roddel in spa!',z:'spa'},'3a':{t:'Masker opsmeren in spa!',z:'spa'},'3b':{t:'Het is verf! Ren uit spa!',z:'spa'},'3c':{t:'Terug in spa.',z:'spa'},'4':{t:'Spa.',z:'spa'},'5a':{t:'Zie Brokkens verstoppen in spa!',z:'spa'},'5b':{t:'Roddel over Brokkens bij spa!',z:'spa'},'6':{t:'Spa.',z:'spa'},'7a':{t:'Roddel bij lobby!',z:'lobby'},'7b':{t:'Dans bij podium!',z:'stage'},'8':{t:'Alle roddels bij podium!',z:'stage'}}},
+  {id:'jasmina',name:'Jasmina',           emoji:'🧖',type:'Spa',             bc:0x1E8449,hc:0xFFCBA4,hair:0x5D0000,acc:'none',
+   sc:{'1':{t:'Wacht bij het publiek in de quizshow.',z:'quizaud'},'2a':{t:'Help gasten in spa!',z:'spa'},'2b':{t:'Roddel in spa!',z:'spa'},'3a':{t:'Masker in spa!',z:'spa'},'3b':{t:'Verf! Ren weg! Spa!',z:'spa'},'3c':{t:'Terug in spa.',z:'spa'},'4':{t:'Spa.',z:'spa'},'5a':{t:'Fluister aan Jasmijn bij spa!',z:'spa'},'5b':{t:'Geheim vertellen bij spa!',z:'spa'},'6':{t:'Spa.',z:'spa'},'7a':{t:'Nieuws bij lobby!',z:'lobby'},'7b':{t:'Dans bij podium!',z:'stage'},'8':{t:'Dramatisch bij podium!',z:'stage'}}},
+  // STEWARDESSEN
+  {id:'jessy',  name:'Jessy Stewardess',  emoji:'✈️',type:'Stewardessen',    bc:0x2980B9,hc:0xFFCBA4,hair:0xCC0000,acc:'none',
+   sc:{'1':{t:'Wacht bij publiek.',z:'quizaud'},'2a':{t:'Gooi vliegtuigpet weg bij ingang!',z:'entrance'},'2b':{t:'Bar!',z:'bar'},'3a':{t:'Bar.',z:'bar'},'3b':{t:'Geef Jack Turbo dekking bij bar!',z:'bar'},'3c':{t:'Bar.',z:'bar'},'4':{t:'Bar.',z:'bar'},'5a':{t:'Bar.',z:'bar'},'5b':{t:'Bar.',z:'bar'},'6':{t:'Bar.',z:'bar'},'7a':{t:'Lobby.',z:'lobby'},'7b':{t:'Podium.',z:'stage'},'8':{t:'"Ik wist het altijd al." Podium!',z:'stage'}}},
+  {id:'dessy',  name:'Dessy Stewardess',  emoji:'✈️',type:'Stewardessen',    bc:0x1A6FA8,hc:0xFFCBA4,hair:0xFF4500,acc:'none',
+   sc:{'1':{t:'Wacht bij publiek.',z:'quizaud'},'2a':{t:'Vier de vrijheid bij ingang!',z:'entrance'},'2b':{t:'Bar!',z:'bar'},'3a':{t:'Bar.',z:'bar'},'3b':{t:'Houd iemand bezig bij bar!',z:'bar'},'3c':{t:'Bar.',z:'bar'},'4':{t:'Bar.',z:'bar'},'5a':{t:'Bar.',z:'bar'},'5b':{t:'Bar.',z:'bar'},'6':{t:'Bar.',z:'bar'},'7a':{t:'Lobby.',z:'lobby'},'7b':{t:'Podium.',z:'stage'},'8':{t:'"Nooit meer Ordinair." Lach. Podium!',z:'stage'}}},
+  // FORTUIN
+  {id:'gijsFortuin',name:'Gijs Fortuin',  emoji:'🍀',type:'Familie Fortuin', bc:0x2ECC71,hc:0xFFCBA4,hair:0x784212,acc:'none',
+   sc:{'1':{t:'Zelfverzekerd bij podium!',z:'quizstage'},'2a':{t:'Pak kamer bij lobby!',z:'lobby'},'2b':{t:'Lobby.',z:'lobby'},'3a':{t:'Zwembad.',z:'pool'},'3b':{t:'Zwembad.',z:'pool'},'3c':{t:'Zwembad.',z:'pool'},'4':{t:'Zwembad.',z:'pool'},'5a':{t:'Strand.',z:'beach'},'5b':{t:'Strand.',z:'beach'},'6':{t:'Strand.',z:'beach'},'7a':{t:'Observeer chaos bij lobby.',z:'lobby'},'7b':{t:'Pompeus bij podium.',z:'stage'},'8':{t:'Feliciteer jezelf bij podium.',z:'stage'}}},
+  {id:'emmaFortuin',name:'Emma Fortuin',  emoji:'🍀',type:'Familie Fortuin', bc:0x27AE60,hc:0xFFCBA4,hair:0x6E2F06,acc:'none',
+   sc:{'1':{t:'Chique bij podium!',z:'quizstage'},'2a':{t:'Accepteer kamer bij lobby.',z:'lobby'},'2b':{t:'Lobby.',z:'lobby'},'3a':{t:'Zwembad.',z:'pool'},'3b':{t:'Zwembad.',z:'pool'},'3c':{t:'Zwembad.',z:'pool'},'4':{t:'Zwembad.',z:'pool'},'5a':{t:'Strand.',z:'beach'},'5b':{t:'Strand.',z:'beach'},'6':{t:'Strand.',z:'beach'},'7a':{t:'Kijk meewarig bij lobby.',z:'lobby'},'7b':{t:'Podium.',z:'stage'},'8':{t:'Verlaat chique podium.',z:'stage'}}},
+  {id:'peterFortuin',name:'Peter Fortuin',emoji:'🍀',type:'Familie Fortuin', bc:0x1D8348,hc:0xFFCBA4,hair:0x5B2C0A,acc:'none',
+   sc:{'1':{t:'Kras lot bij podium. Alleen een Maserati. Bah.',z:'quizstage'},'2a':{t:'Verveeld bij lobby.',z:'lobby'},'2b':{t:'Lobby.',z:'lobby'},'3a':{t:'Zwembad.',z:'pool'},'3b':{t:'Zwembad.',z:'pool'},'3c':{t:'Zwembad.',z:'pool'},'4':{t:'Zwembad.',z:'pool'},'5a':{t:'Strand.',z:'beach'},'5b':{t:'Strand.',z:'beach'},'6':{t:'Strand.',z:'beach'},'7a':{t:'Zeg iets slims bij lobby. Kijk weg.',z:'lobby'},'7b':{t:'Podium.',z:'stage'},'8':{t:'Geef toe dat het leuk was. Podium.',z:'stage'}}},
+];
+
+// ============================================================
+// EMOJI OPTIONS FOR CUSTOM ROLE
+// ============================================================
+var CUSTOM_EMOJIS=['😀','😎','🤩','🥸','🤠','👻','🐱','🐶','🦊','🐸','🐼','🦄','🌈','⭐','🔥','💎','🎭','🎪','🏄','🚀','🎵','🎮','🍕','🌺','🦋'];
+var selectedCustomEmoji='😀';
+var selectedCustomJob=null;  // 'flamingo','security','entertainer','tourist','assistant'
+var selectedAssistant=null;  // role id
+
+var CUSTOM_JOBS=[
+  {id:'flamingo', emoji:'🌹', label:'Werken in De Roze Flamingo',
+   tasks:{'1':'Wacht bij het publiek bij de quizshow.','2a':'Verwelkom gasten bij de lobby!','2b':'Help bij de receptie in de lobby.','3a':'Ruim de spa op!','3b':'Breng bestellingen bij de lobby!','3c':'Luister mee bij de lobby.','4':'Doe je werk bij de lobby.','5a':'Maak de spa schoon!','5b':'Sta klaar bij de Koninklijke Suite.','6':'Verwelkom nieuwe gasten bij de ingang!','7a':'Houd de lobby netjes.','7b':'Dans mee bij het podium!','8':'Kijk toe bij het podium.'},
+   zones:{'1':'quizaud','2a':'lobby','2b':'lobby','3a':'spa','3b':'lobby','3c':'lobby','4':'lobby','5a':'spa','5b':'throne','6':'entrance','7a':'lobby','7b':'stage','8':'stage'}},
+  {id:'security', emoji:'🛡️', label:'Beveiliging van het resort',
+   tasks:{'1':'Wacht bij het publiek.','2a':'Controleer de ingang!','2b':'Patrouilleer bij de lobby.','3a':'Bewijk de ingang.','3b':'Houd de lobby in de gaten.','3c':'Patrouilleer bij de lobby.','4':'Controleer de lobby.','5a':'Bewijk de spa van buitenaf.','5b':'Bescherm de Koninklijke Suite!','6':'Controleer nieuwe gasten bij de ingang.','7a':'Houd de lobby veilig!','7b':'BUKKEN bij het podium!','8':'Sta in de houding bij het podium.'},
+   zones:{'1':'quizaud','2a':'entrance','2b':'lobby','3a':'entrance','3b':'lobby','3c':'lobby','4':'lobby','5a':'spa','5b':'throne','6':'entrance','7a':'lobby','7b':'stage','8':'stage'}},
+  {id:'entertainer', emoji:'🎭', label:'Entertainmentteam / animatie',
+   tasks:{'1':'Wacht bij het publiek.','2a':'Verwelkom gasten met een dansje bij de ingang!','2b':'Maak gasten blij bij de lobby!','3a':'Animeer bij het zwembad!','3b':'Activiteiten bij het zwembad!','3c':'Dans bij het zwembad!','4':'Zwembad entertainment!','5a':'Strandanimatie bij het strand!','5b':'Strand!','6':'Verwelkom Jack Turbo bij de ingang!','7a':'Organiseer een spel bij de lobby!','7b':'Leid de dans bij het podium!','8':'Sluit af bij het podium!'},
+   zones:{'1':'quizaud','2a':'entrance','2b':'lobby','3a':'pool','3b':'pool','3c':'pool','4':'pool','5a':'beach','5b':'beach','6':'entrance','7a':'lobby','7b':'stage','8':'stage'}},
+  {id:'tourist', emoji:'🧳', label:'Toerist op vakantie',
+   tasks:{'1':'Wacht bij het publiek.','2a':'Loop de lobby in — wat een resort!','2b':'Verken de lobby.','3a':'Geniet bij het zwembad!','3b':'Ontspan bij het zwembad.','3c':'Zwembad!','4':'Zwembad.','5a':'Bananenboot bij het strand!','5b':'Strand!','6':'Kijk naar Jack Turbo bij de bar.','7a':'Observeer de chaos bij de lobby.','7b':'Dans mee bij het podium!','8':'Kijk toe bij het podium.'},
+   zones:{'1':'quizaud','2a':'lobby','2b':'lobby','3a':'pool','3b':'pool','3c':'pool','4':'pool','5a':'beach','5b':'beach','6':'bar','7a':'lobby','7b':'stage','8':'stage'}},
+  {id:'assistant', emoji:'🤝', label:'Assistent van iemand',
+   tasks:null, zones:null}, // filled in dynamically
+];
+
+function initEmojiPick(){
+  var el=document.getElementById('emojiPick');el.innerHTML='';
+  CUSTOM_EMOJIS.forEach(function(e){
+    var span=document.createElement('span');span.className='ep'+(e===selectedCustomEmoji?' sel':'');
+    span.textContent=e;span.onclick=function(){selectedCustomEmoji=e;initEmojiPick();};
+    el.appendChild(span);
+  });
+  initJobOptions();
+}
+
+function initJobOptions(){
+  var el=document.getElementById('customRoleOptions');el.innerHTML='';
+  CUSTOM_JOBS.forEach(function(job){
+    var btn=document.createElement('div');
+    btn.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;border:2px solid '+(selectedCustomJob===job.id?'var(--sun)':'rgba(255,255,255,.15)')+';background:'+(selectedCustomJob===job.id?'rgba(255,184,48,.12)':'rgba(255,255,255,.05)')+';transition:.15s;';
+    btn.innerHTML='<span style="font-size:20px">'+job.emoji+'</span><span style="font-size:13px;font-weight:700;">'+job.label+'</span>';
+    btn.onclick=function(){
+      selectedCustomJob=job.id;
+      selectedAssistant=null;
+      initJobOptions();
+      document.getElementById('assistantPick').style.display=job.id==='assistant'?'block':'none';
+      if(job.id==='assistant') initAssistantList();
+    };
+    el.appendChild(btn);
+  });
+}
+
+function initAssistantList(){
+  var el=document.getElementById('assistantList');el.innerHTML='';
+  ROLES.forEach(function(r){
+    var btn=document.createElement('div');
+    btn.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;cursor:pointer;border:2px solid '+(selectedAssistant===r.id?'var(--sun)':'rgba(255,255,255,.1)')+';background:'+(selectedAssistant===r.id?'rgba(255,184,48,.12)':'rgba(255,255,255,.04)')+';margin-bottom:4px;';
+    btn.innerHTML='<span style="font-size:16px">'+r.emoji+'</span><span style="font-size:12px;font-weight:700;">'+r.name+'</span>';
+    btn.onclick=function(){selectedAssistant=r.id;initAssistantList();};
+    el.appendChild(btn);
+  });
+}
+
+function confirmCustom(){
+  var name=document.getElementById('customName').value.trim();
+  if(!name){toast('Vul een naam in!');return;}
+  if(!selectedCustomJob){toast('Kies wat jij doet in het verhaal!');return;}
+  if(selectedCustomJob==='assistant'&&!selectedAssistant){toast('Kies van wie je assistent bent!');return;}
+
+  var job=CUSTOM_JOBS.filter(function(j){return j.id===selectedCustomJob;})[0];
+  var sc={};
+
+  if(selectedCustomJob==='assistant'){
+    // Copy the tasks/zones of the chosen role but adapt text
+    var bossRole=ROLES.filter(function(r){return r.id===selectedAssistant;})[0];
+    var bossName=bossRole?bossRole.name:'je personage';
+    SCENES.forEach(function(scene){
+      var bossScene=bossRole&&bossRole.sc[scene.id];
+      if(bossScene){
+        var zone=bossScene.z;
+        // Fix zone for quiz map
+        if(scene.map==='quiz'&&zone!=='quizstage'&&zone!=='quizaud') zone='quizaud';
+        sc[scene.id]={t:'Help '+bossName+': '+bossScene.t, z:zone};
+      } else {
+        var defZone=scene.map==='quiz'?'quizaud':'lobby';
+        sc[scene.id]={t:'Assisteer '+bossName+' bij het spel.',z:defZone};
+      }
+    });
+  } else {
+    SCENES.forEach(function(scene){
+      var zone=job.zones[scene.id]||( scene.map==='quiz'?'quizaud':'lobby');
+      var task=job.tasks[scene.id]||'Speel je rol!';
+      sc[scene.id]={t:task,z:zone};
+    });
+  }
+
+  var customRole={
+    id:'custom_'+Date.now(),
+    name:name,emoji:selectedCustomEmoji,type:'Zelfverzonnen',
+    bc:0xFF8C00,hc:0xFFCBA4,hair:0x888888,acc:'none',
+    sc:sc
+  };
+  myRole=customRole;
+  selRoleId=customRole.id;
+  registerAndWait();
+}
+
+// ============================================================
+// STATE
+// ============================================================
+var gameCode=null,isHost=false,myRole=null,selRoleId=null;
+var curSceneIdx=0,nearZone=null,doneZones={},myDone=false,gameRunning=false;
+var pollTimer=null,autoAdvanced=false,lastDoneCount=-1;
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.getElementById(id).classList.add('active');
+  if(id==='sCustom')initEmojiPick();
+}
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2800);}
+
+// ============================================================
+// HOST
+// ============================================================
+function goHost(){
+  isHost=true;
+  gameCode=Math.random().toString(36).substring(2,6).toUpperCase();
+  var initData={sceneIdx:0,started:false,ended:false,doneCount:0,totalPlayers:0,players:{},positions:{}};
+  setState(gameCode,initData,function(){
+    document.getElementById('hostCode').textContent=gameCode;
+    show('sHost');
+    startPoll();
+    toast('Spel aangemaakt! Code: '+gameCode);
+  });
+}
+
+function hostStart(){
+  getState(gameCode,function(st){
+    var players=st&&st.players?st.players:{};
+    var total=Object.keys(players).length;
+    updateState(gameCode,{started:true,totalPlayers:total,doneCount:0,doneMap:{}},function(){
+      launch3D();
+    });
+  });
+}
+
+function hostNext(){
+  if(!isHost)return; // only host can advance
+  var next=Math.min(curSceneIdx+1,SCENES.length-1);
+  if(next===curSceneIdx)return; // already at last scene
+  updateState(gameCode,{sceneIdx:next,doneCount:0,doneMap:{}},function(){
+    // Delete player_done rows for new scene (clean slate)
+    sbReq('DELETE','player_done?game_code=eq.'+gameCode+'&scene_id=eq.'+SCENES[next].id)
+      .catch(function(){});
+    changeScene(next);
+  });
+}
+function hostPrev(){
+  if(!isHost)return;
+  var prev=Math.max(curSceneIdx-1,0);
+  updateState(gameCode,{sceneIdx:prev,doneCount:0,doneMap:{}},function(){
+    sbReq('DELETE','player_done?game_code=eq.'+gameCode+'&scene_id=eq.'+SCENES[prev].id)
+      .catch(function(){});
+    changeScene(prev);
+  });
+}
+
+// ============================================================
+// JOIN
+// ============================================================
+function doJoin(){
+  var code=document.getElementById('joinInput').value.trim().toUpperCase();
+  if(code.length<3){toast('Voer een geldige code in!');return;}
+  toast('Verbinding maken...');
+  getState(code,function(st){
+    if(!st){toast('Geen spel gevonden: '+code);return;}
+    gameCode=code;
+    buildRoleList();
+    show('sRole');
+    startPoll();
+  });
+}
+
+function buildRoleList(){
+  getState(gameCode,function(st){
+    var taken=st&&st.players?Object.keys(st.players):[];
+    var list=document.getElementById('roleList');list.innerHTML='';
+    var groups={};
+    ROLES.forEach(function(r){if(!groups[r.type])groups[r.type]=[];groups[r.type].push(r);});
+    Object.keys(groups).forEach(function(g){
+      var lbl=document.createElement('div');lbl.className='grp-lbl';lbl.textContent=g;list.appendChild(lbl);
+      groups[g].forEach(function(r){
+        var isTaken=taken.indexOf(r.id)>=0&&r.id!==(myRole&&myRole.id);
+        var div=document.createElement('div');
+        div.className='ri'+(isTaken?' taken':(selRoleId===r.id?' sel':''));
+        div.innerHTML='<span class="em">'+r.emoji+'</span><div><div class="nm">'+r.name+'</div><div class="tp">'+r.type+'</div></div>';
+        if(!isTaken)div.onclick=(function(rid){return function(){selRoleId=rid;myRole=ROLES.filter(function(x){return x.id===rid;})[0];buildRoleList();};})(r.id);
+        list.appendChild(div);
+      });
+    });
+  });
+}
+
+function pickRole(){
+  if(!selRoleId||!myRole){toast('Kies eerst een personage!');return;}
+  registerAndWait();
+}
+
+function registerAndWait(){
+  getState(gameCode,function(st){
+    var data=st||{};
+    data.players=data.players||{};
+    data.players[myRole.id]={name:myRole.name,emoji:myRole.emoji,id:myRole.id};
+    setState(gameCode,data,function(){
+      document.getElementById('waitName').textContent=myRole.emoji+' '+myRole.name;
+      document.getElementById('waitStatus').textContent='Verbonden! Wacht op de leerkracht...';
+      show('sWait');
+    });
+  });
+}
+
+// ============================================================
+// POLL
+// ============================================================
+function startPoll(){
+  if(pollTimer)clearInterval(pollTimer);
+  pollTimer=setInterval(pollState,2000);
+}
+
+function pollState(){
+  if(!gameCode)return;
+  getState(gameCode,function(st){
+    if(!st)return;
+    // Host lobby
+    if(document.getElementById('sHost').classList.contains('active')){
+      renderPlayers(st.players||{},document.getElementById('hostPlayers'),document.getElementById('hostCount'));
+      return;
+    }
+    // Wait screen
+    if(document.getElementById('sWait').classList.contains('active')){
+      renderPlayers(st.players||{},document.getElementById('waitPlayers'),null);
+      if(st.started===true&&!gameRunning){launch3D();return;}
+    }
+    // Role screen
+    if(document.getElementById('sRole').classList.contains('active')||document.getElementById('sCustom').classList.contains('active')){
+      // just refresh taken in background
+    }
+    // In game
+    if(gameRunning){
+      // Scene change (only if host actually changed it - prevents flashback)
+      if(st.sceneIdx!==undefined&&st.sceneIdx!==curSceneIdx){
+        changeScene(st.sceneIdx);
+        return; // skip rest of poll after scene change
+      }
+      // Count done from dedicated player_done table (race-condition-free)
+      if(isHost){
+        var scId=SCENES[curSceneIdx].id;
+        sbReq('GET','player_done?game_code=eq.'+gameCode+'&scene_id=eq.'+scId+'&select=role_id')
+          .then(function(rows){
+            var done=rows?rows.length:0;
+            var total=st.totalPlayers||1;
+            document.getElementById('progress').textContent=done+'/'+total+' klaar';
+            document.getElementById('doneWait').textContent=done+'/'+total+' klasgenoten klaar...';
+            // Update doneCount in main state so non-host players see it too
+            if(done!==lastDoneCount){
+              lastDoneCount=done;
+              updateState(gameCode,{doneCount:done},function(){});
+            }
+            if(done>=total&&total>0&&!autoAdvanced){
+              autoAdvanced=true;
+              setTimeout(hostNext,3000);
+            }
+          }).catch(function(){});
+      } else {
+        // Non-host: just show what host's state says
+        var total=st.totalPlayers||1;
+        var done=st.doneCount||0;
+        document.getElementById('progress').textContent=done+'/'+total+' klaar';
+        document.getElementById('doneWait').textContent=done+'/'+total+' klasgenoten klaar...';
+      }
+      if(st.positions){
+        Object.keys(st.positions).forEach(function(id){
+          if(myRole&&id===myRole.id)return;
+          updateOther(id,st.positions[id]);
+        });
+      }
+    }
+  });
+}
+
+function renderPlayers(players,el,countEl){
+  if(!el)return;
+  el.innerHTML='';
+  var cnt=0;
+  Object.values(players).forEach(function(p){var pill=document.createElement('span');pill.className='pill';pill.textContent=p.emoji+' '+p.name;el.appendChild(pill);cnt++;});
+  if(countEl)countEl.textContent=cnt+' speler(s) verbonden';
+}
+
+// ============================================================
+// THREE.JS
+// ============================================================
+var scene3,camera,renderer,clock3,playerMesh=null,otherMeshes={},zoneMeshes=[],camYaw=0,keys={},joyDx=0,joyDy=0,joyActive=false,posTimer=0;
+var doorLeft=null,doorRight=null,doorOpenState=0,ownLabel=null;
+
+function launch3D(){
+  if(gameRunning)return;
+  gameRunning=true;
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.getElementById('gameCanvas').classList.add('active');
+  document.getElementById('hud').classList.add('active');
+  initThree();buildWorld('quiz');buildZones('quiz');
+  spawnPlayer();setupKeys();setupJoy();
+  if(isHost)document.getElementById('hostHud').classList.add('active');
+  document.getElementById('roleBadge').textContent=myRole?myRole.emoji+' '+myRole.name:'🎬 Host';
+  showAnnounce(0);animate();startPoll();
+}
+
+function initThree(){
+  scene3=new THREE.Scene();scene3.background=new THREE.Color(0x87CEEB);scene3.fog=new THREE.Fog(0x87CEEB,50,140);
+  camera=new THREE.PerspectiveCamera(62,window.innerWidth/window.innerHeight,0.1,250);
+  renderer=new THREE.WebGLRenderer({canvas:document.getElementById('gameCanvas'),antialias:true});
+  renderer.setSize(window.innerWidth,window.innerHeight);renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  renderer.outputColorSpace=THREE.SRGBColorSpace;
+  clock3=new THREE.Clock();
+  setupLighting();
+  window.addEventListener('resize',function(){camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});
+}
+
+function setupLighting(){
+  scene3.add(new THREE.HemisphereLight(0xCFE8FF,0xC2A878,0.55));
+  var sun=new THREE.DirectionalLight(0xFFF3D6,1.35);
+  sun.position.set(40,55,25);sun.castShadow=true;
+  sun.shadow.mapSize.set(2048,2048);
+  sun.shadow.camera.left=-65;sun.shadow.camera.right=65;sun.shadow.camera.top=65;sun.shadow.camera.bottom=-65;
+  sun.shadow.camera.near=1;sun.shadow.camera.far=160;sun.shadow.bias=-0.0015;
+  scene3.add(sun);
+  var fill=new THREE.DirectionalLight(0xAACCFF,0.25);fill.position.set(-30,20,-30);scene3.add(fill);
+}
+
+function clearScene(){
+  while(scene3.children.length)scene3.remove(scene3.children[0]);
+  doorLeft=null;doorRight=null;doorOpenState=0;
+  WALL_COLLIDERS=[];nameLabels={};ownLabel=null;
+  setupLighting();
+}
+
+// ============================================================
+// TEXTURE GENERATION (canvas-based, photoreal-ish PBR-lite)
+// ============================================================
+var TEX_CACHE={};
+function makeTexture(key,fn,repX,repY){
+  if(TEX_CACHE[key])return TEX_CACHE[key];
+  var cv=document.createElement('canvas');cv.width=256;cv.height=256;
+  fn(cv.getContext('2d'),cv.width,cv.height);
+  var tex=new THREE.CanvasTexture(cv);
+  tex.wrapS=tex.wrapT=THREE.RepeatWrapping;
+  tex.repeat.set(repX||1,repY||1);
+  tex.anisotropy=4;
+  TEX_CACHE[key]=tex;
+  return tex;
+}
+
+function texSand(ctx,w,h){
+  var g=ctx.createLinearGradient(0,0,0,h);g.addColorStop(0,'#EFE0B8');g.addColorStop(1,'#E3CFA0');
+  ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+  for(var i=0;i<1400;i++){
+    var x=Math.random()*w,y=Math.random()*h,r=Math.random()*1.3+0.2;
+    var sh=Math.random()*40-20;
+    ctx.fillStyle='rgba('+(214+sh)+','+(196+sh)+','+(150+sh)+',0.5)';
+    ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
+  }
+}
+function texWater(ctx,w,h){
+  var g=ctx.createLinearGradient(0,0,0,h);g.addColorStop(0,'#1B7FB8');g.addColorStop(0.5,'#0E6FA8');g.addColorStop(1,'#0A5F94');
+  ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+  ctx.globalAlpha=0.35;
+  for(var i=0;i<60;i++){
+    ctx.strokeStyle='rgba(255,255,255,'+(Math.random()*0.4+0.1)+')';
+    ctx.lineWidth=Math.random()*2+0.5;
+    var y=Math.random()*h;
+    ctx.beginPath();ctx.moveTo(0,y);
+    for(var x=0;x<=w;x+=16){ctx.lineTo(x,y+Math.sin(x*0.08+i)*4);}
+    ctx.stroke();
+  }
+  ctx.globalAlpha=1;
+}
+function texPoolWater(ctx,w,h){
+  var g=ctx.createLinearGradient(0,0,0,h);g.addColorStop(0,'#3FC1E0');g.addColorStop(1,'#1E9DC8');
+  ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+  ctx.globalAlpha=0.3;
+  for(var i=0;i<40;i++){
+    ctx.strokeStyle='rgba(255,255,255,0.5)';ctx.lineWidth=1.5;
+    var y=Math.random()*h;
+    ctx.beginPath();ctx.moveTo(0,y);
+    for(var x=0;x<=w;x+=12){ctx.lineTo(x,y+Math.sin(x*0.1+i)*3);}
+    ctx.stroke();
+  }
+  ctx.globalAlpha=1;
+}
+function texGrass(ctx,w,h){
+  var g=ctx.createLinearGradient(0,0,0,h);g.addColorStop(0,'#5FA84A');g.addColorStop(1,'#4D9038');
+  ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+  for(var i=0;i<900;i++){
+    var x=Math.random()*w,y=Math.random()*h;
+    ctx.strokeStyle='rgba('+(40+Math.random()*60)+','+(90+Math.random()*60)+','+(30+Math.random()*40)+',0.6)';
+    ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.random()*3-1.5,y-4-Math.random()*3);ctx.stroke();
+  }
+}
+function texMarble(ctx,w,h){
+  ctx.fillStyle='#F2EEE6';ctx.fillRect(0,0,w,h);
+  for(var i=0;i<10;i++){
+    ctx.strokeStyle='rgba(180,175,165,'+(Math.random()*0.3+0.1)+')';
+    ctx.lineWidth=Math.random()*2+0.5;
+    ctx.beginPath();ctx.moveTo(Math.random()*w,0);
+    ctx.bezierCurveTo(Math.random()*w,h*0.3,Math.random()*w,h*0.7,Math.random()*w,h);
+    ctx.stroke();
+  }
+  ctx.strokeStyle='rgba(150,145,135,0.4)';ctx.lineWidth=2;
+  ctx.strokeRect(2,2,w-4,h-4);
+}
+function texWallPlaster(ctx,w,h,baseColor){
+  ctx.fillStyle=baseColor;ctx.fillRect(0,0,w,h);
+  for(var i=0;i<500;i++){
+    var x=Math.random()*w,y=Math.random()*h;
+    var sh=Math.random()*24-12;
+    ctx.fillStyle='rgba(255,255,255,'+(Math.random()*0.06)+')';
+    ctx.fillRect(x,y,Math.random()*3+1,Math.random()*3+1);
+  }
+}
+function texWood(ctx,w,h){
+  ctx.fillStyle='#A8763E';ctx.fillRect(0,0,w,h);
+  for(var i=0;i<14;i++){
+    var y=i*(h/14);
+    ctx.fillStyle='rgba(80,50,20,'+(Math.random()*0.2+0.1)+')';
+    ctx.fillRect(0,y,w,h/14*0.15);
+  }
+}
+function texRoofTile(ctx,w,h){
+  ctx.fillStyle='#A8472E';ctx.fillRect(0,0,w,h);
+  for(var y=0;y<h;y+=18){
+    for(var x=0;x<w;x+=24){
+      ctx.fillStyle='rgba(0,0,0,0.15)';
+      ctx.beginPath();ctx.arc(x+12,y,11,0,Math.PI);ctx.fill();
+      ctx.fillStyle='rgba(255,150,120,0.12)';
+      ctx.beginPath();ctx.arc(x+12,y,9,0,Math.PI);ctx.fill();
+    }
+  }
+}
+function texCarpetRed(ctx,w,h){
+  ctx.fillStyle='#8B1A2B';ctx.fillRect(0,0,w,h);
+  for(var i=0;i<300;i++){
+    ctx.fillStyle='rgba(0,0,0,'+(Math.random()*0.12)+')';
+    ctx.fillRect(Math.random()*w,Math.random()*h,2,2);
+  }
+}
+function texStonePath(ctx,w,h){
+  ctx.fillStyle='#C8C0B0';ctx.fillRect(0,0,w,h);
+  for(var i=0;i<6;i++){
+    ctx.strokeStyle='rgba(140,135,120,0.5)';ctx.lineWidth=2;
+    ctx.beginPath();
+    if(i%2===0){ctx.moveTo(0,i*h/6);ctx.lineTo(w,i*h/6+8);}
+    else{ctx.moveTo(i*w/6,0);ctx.lineTo(i*w/6-6,h);}
+    ctx.stroke();
+  }
+}
+
+var WALL_COLLIDERS=[]; // array of {minX,maxX,minZ,maxZ} for wall collision
+
+function bx(w,h,d,col,x,y,z,mat,collide){
+  var material=mat||new THREE.MeshStandardMaterial({color:col,roughness:0.85,metalness:0.05});
+  var m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);
+  m.position.set(x,y+h/2,z);m.castShadow=true;m.receiveShadow=true;scene3.add(m);
+  if(collide){
+    WALL_COLLIDERS.push({minX:x-w/2,maxX:x+w/2,minZ:z-d/2,maxZ:z+d/2});
+  }
+  return m;
+}
+function fl(w,d,col,x,z,y,mat){
+  y=y||0;
+  var material=mat||new THREE.MeshStandardMaterial({color:col,roughness:0.9,metalness:0.02});
+  var m=new THREE.Mesh(new THREE.PlaneGeometry(w,d),material);
+  m.rotation.x=-Math.PI/2;m.position.set(x,y,z);m.receiveShadow=true;scene3.add(m);return m;
+}
+function texMat(tex,extra){
+  var o=Object.assign({map:tex,roughness:0.85,metalness:0.04},extra||{});
+  return new THREE.MeshStandardMaterial(o);
+}
+
+function buildWorld(map){
+  clearScene();zoneMeshes=[];otherMeshes={};
+  if(map==='quiz'){
+    buildQuizStudio();
+  } else {
+    buildResort();
+  }
+}
+
+function buildQuizStudio(){
+  scene3.background=new THREE.Color(0x140A2E);scene3.fog=new THREE.Fog(0x140A2E,28,75);
+  var floorTex=makeTexture('studioFloor',function(ctx,w,h){texMarble(ctx,w,h);},6,6);
+  fl(46,46,0x2C1654,0,0,0,texMat(floorTex,{color:0x6a5a8a,roughness:0.35,metalness:0.15}));
+  // Stage platform
+  bx(22,0.8,14,0xFFB830,0,0,-10);
+  // Backdrop wall with glow panel
+  bx(26,11,1,0x241046,0,5,-17.3);
+  var glowMat=new THREE.MeshStandardMaterial({color:0xFFD700,emissive:0xFFD700,emissiveIntensity:0.55,roughness:0.4});
+  bx(20,4,0.3,0xFFD700,0,7,-16.7,glowMat);
+  // Studio lights truss
+  bx(26,0.3,0.3,0x111111,0,11,-12);
+  for(var i=-10;i<=10;i+=4){
+    var spot=new THREE.Mesh(new THREE.ConeGeometry(0.4,0.6,8),new THREE.MeshStandardMaterial({color:0x222222,metalness:0.6,roughness:0.3}));
+    spot.position.set(i,10.7,-12);spot.rotation.x=Math.PI;scene3.add(spot);
+    var light=new THREE.SpotLight(0xFFE8B0,0.6,30,Math.PI/6,0.4);
+    light.position.set(i,10.5,-12);light.target.position.set(i*0.6,0.5,-10);
+    scene3.add(light);scene3.add(light.target);
+  }
+  // Audience seating - tiered
+  for(var rr=0;rr<4;rr++){
+    bx(32,0.7,7.5,0x4A235A,0,rr*0.85,11+rr*4.2);
+    for(var cc=-7;cc<=7;cc++){
+      var seatMat=new THREE.MeshStandardMaterial({color:(cc+rr)%2===0?0xFF4081:0xE91E8C,roughness:0.7});
+      bx(1.1,0.55,0.85,0xFF4081,cc*2.1,rr*0.85+0.7,11+rr*4.2,seatMat);
+    }
+  }
+  // Side curtains
+  var curtainMat=texMat(makeTexture('curtain',function(ctx,w,h){
+    var g=ctx.createLinearGradient(0,0,w,0);g.addColorStop(0,'#5C0F1F');g.addColorStop(0.5,'#7A1530');g.addColorStop(1,'#5C0F1F');
+    ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+    for(var i=0;i<16;i++){ctx.fillStyle='rgba(0,0,0,0.15)';ctx.fillRect(i*16,0,3,h);}
+  },2,1),{roughness:0.95,metalness:0});
+  bx(2.2,15,1.2,0x8B0000,-14,7,-12,curtainMat);
+  bx(2.2,15,1.2,0x8B0000,14,7,-12,curtainMat);
+  // Trophy / prize podium
+  bx(2.5,2.5,2.5,0xffffff,0,0,-7);
+  var trophyMat=new THREE.MeshStandardMaterial({color:0xFFD700,metalness:0.85,roughness:0.2,emissive:0x553300,emissiveIntensity:0.15});
+  var trophy=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.5,1.4,12),trophyMat);
+  trophy.position.set(0,3.2,-7);trophy.castShadow=true;scene3.add(trophy);
+}
+
+function buildResort(){
+  scene3.background=new THREE.Color(0x87CEEB);scene3.fog=new THREE.Fog(0x87CEEB,60,150);
+
+  // ===== ISLAND RING LAYOUT: tiles (center) -> grass -> beach -> water (outer) =====
+  // True ring (donut) shapes at the SAME height with tiny polygonOffset to prevent
+  // both z-fighting AND visible height-steps between rings (no more "blocky" seams).
+  var waterTex=makeTexture('water',texWater,12,12);
+  seaMesh=ringShape(52,150,0,texMat(waterTex,{roughness:0.12,metalness:0.4,transparent:true,opacity:0.93,polygonOffset:true,polygonOffsetFactor:3}),64);
+
+  var sandTex=makeTexture('sand',texSand,14,14);
+  ringShape(34,52,0.001,texMat(sandTex,{polygonOffset:true,polygonOffsetFactor:2}),64);
+
+  var grassTex=makeTexture('grass',texGrass,18,18);
+  ringShape(22,34,0.002,texMat(grassTex,{polygonOffset:true,polygonOffsetFactor:1}),56);
+
+  var stoneTex=makeTexture('stonepath',texStonePath,12,12);
+  ringShape(0,22,0.003,texMat(stoneTex,{polygonOffset:true,polygonOffsetFactor:0}),48);
+
+  // ===== HOTEL BUILDING (centered on the tiled island center) =====
+  buildHotelBuilding();
+
+  // ===== POOL (separate sunken basin on the grass ring, away from building) =====
+  buildPoolBasin(24,0);
+
+  // ===== OUTDOOR DECOR (placed within grass/beach rings) =====
+  buildOutdoorArea();
+}
+
+var seaMesh=null;
+
+// True ring (donut) shape: flat annulus from innerR to outerR, centered at origin.
+// All rings sit at (near) the same height so there's no visible vertical step between
+// adjacent rings - texture/color change only, no blocky seam.
+function ringShape(innerR,outerR,y,mat,segments){
+  var geo=new THREE.RingGeometry(innerR,outerR,segments||48,1);
+  // RingGeometry UVs are radial by default; remap to make textures repeat nicely across the ring width
+  var uv=geo.attributes.uv;
+  var pos=geo.attributes.position;
+  for(var i=0;i<pos.count;i++){
+    var px=pos.getX(i),pz=pos.getY(i); // before rotation, geometry is built in XY plane
+    var r=Math.sqrt(px*px+pz*pz);
+    var ang=Math.atan2(pz,px);
+    uv.setXY(i,(r-innerR)/(outerR-innerR)*4, (ang/(Math.PI*2)+0.5)*8);
+  }
+  uv.needsUpdate=true;
+  var m=new THREE.Mesh(geo,mat||new THREE.MeshStandardMaterial({color:0xffffff,roughness:0.9}));
+  m.rotation.x=-Math.PI/2;m.position.set(0,y,0);m.receiveShadow=true;scene3.add(m);return m;
+}
+
+function buildPoolBasin(x,z){
+  var poolR=7;
+  // Deck (raised tile platform around pool)
+  var deckTex=makeTexture('pooldeck',texMarble,5,5);
+  var deck=new THREE.Mesh(new THREE.CylinderGeometry(poolR+2.2,poolR+2.2,0.35,40),texMat(deckTex,{roughness:0.55}));
+  deck.position.set(x,0.17,z);deck.receiveShadow=true;deck.castShadow=true;scene3.add(deck);
+  // Basin walls (white rim)
+  var rimMat=new THREE.MeshStandardMaterial({color:0xFFFFFF,roughness:0.4});
+  var rim=new THREE.Mesh(new THREE.TorusGeometry(poolR+0.15,0.25,10,40),rimMat);
+  rim.rotation.x=Math.PI/2;rim.position.set(x,0.35,z);rim.castShadow=true;scene3.add(rim);
+  // Sunken basin interior walls (cylinder, open top, slightly below ground)
+  var basinMat=new THREE.MeshStandardMaterial({color:0xDCEFF5,roughness:0.3,side:THREE.BackSide});
+  var basin=new THREE.Mesh(new THREE.CylinderGeometry(poolR,poolR-0.3,1.4,40,1,true),basinMat);
+  basin.position.set(x,-0.6,z);scene3.add(basin);
+  // Pool water surface (sits inside basin, below deck level)
+  var poolTex=makeTexture('poolwater',texPoolWater,4,4);
+  var water=new THREE.Mesh(new THREE.CircleGeometry(poolR-0.3,40),texMat(poolTex,{roughness:0.08,metalness:0.45,transparent:true,opacity:0.92}));
+  water.rotation.x=-Math.PI/2;water.position.set(x,-0.15,z);scene3.add(water);
+  // Pool floor (visible through water, light blue tile)
+  var floorMat=new THREE.MeshStandardMaterial({color:0x1E9DC8,roughness:0.4});
+  var pfloor=new THREE.Mesh(new THREE.CircleGeometry(poolR-0.3,40),floorMat);
+  pfloor.rotation.x=-Math.PI/2;pfloor.position.set(x,-1.25,z);scene3.add(pfloor);
+  // Loungers around the deck
+  for(var li=0;li<6;li++){
+    var a=(li/6)*Math.PI*2;
+    var lx=x+Math.cos(a)*(poolR+1.3),lz=z+Math.sin(a)*(poolR+1.3);
+    var lounger=bx(1.8,0.3,0.6,0xFFFFFF,lx,0,lz);
+    lounger.rotation.y=a;
+  }
+}
+
+function buildHotelBuilding(){
+  var wallTexPink=makeTexture('wallPink',function(ctx,w,h){texWallPlaster(ctx,w,h,'#F2A6C4');},4,2);
+  var wallTexCream=makeTexture('wallCream',function(ctx,w,h){texWallPlaster(ctx,w,h,'#F5EBD8');},4,2);
+  var wallMatOuter=texMat(wallTexPink,{roughness:0.8});
+  var wallMatInner=texMat(wallTexCream,{roughness:0.75});
+  var roofTex=makeTexture('roof',texRoofTile,10,4);
+  var roofMat=texMat(roofTex,{roughness:0.7});
+  var floorMarble=makeTexture('lobbyfloor',texMarble,6,6);
+  var carpetTex=makeTexture('carpet',texCarpetRed,4,8);
+
+  // Building footprint: x -16..16, z -16..16  (32 x 32), walls height 6.5
+  var H=6.5, T=0.5; // wall thickness
+
+  // --- Indoor floor (marble in lobby area, carpet in corridors) ---
+  fl(32,32,0xF2EEE6,0,0,0.02,texMat(floorMarble,{roughness:0.4,metalness:0.08}));
+  fl(7,10,0x8B1A2B,0,-3.5,0.03,texMat(carpetTex,{roughness:0.95}));   // corridor to throne
+  fl(8,6,0x8B1A2B,-9,-4,0.03,texMat(carpetTex,{roughness:0.95}));     // corridor to spa
+  fl(8,6,0x8B1A2B,9,-4,0.03,texMat(carpetTex,{roughness:0.95}));      // corridor to bar
+
+  // --- Outer perimeter walls with entrance gap (south side z=16) ---
+  bx(32,H,T,0xF2A6C4,0,0,-16,wallMatOuter,true); // north wall
+  bx(T,H,32,0xF2A6C4,-16,0,0,wallMatOuter,true); // west wall
+  bx(T,H,32,0xF2A6C4,16,0,0,wallMatOuter,true);  // east wall
+  // south wall split with entrance gap in middle
+  bx(11,H,T,0xF2A6C4,-10.5,0,16,wallMatOuter,true);
+  bx(11,H,T,0xF2A6C4,10.5,0,16,wallMatOuter,true);
+  // Entrance archway top
+  bx(10,1.2,T,0xF2A6C4,0,H-0.6,16,wallMatOuter);
+  // Entrance door frame posts
+  bx(0.6,H,0.6,0xCC6699,-5,0,16,null,true);
+  bx(0.6,H,0.6,0xCC6699,5,0,16,null,true);
+
+  // --- Real double door that opens when a player approaches ---
+  var doorMat=texMat(makeTexture('doorwood',texWood,2,2),{roughness:0.6,metalness:0.1});
+  doorLeft=new THREE.Mesh(new THREE.BoxGeometry(4.4,5.0,0.25),doorMat);
+  doorLeft.position.set(-2.2,2.5,16);doorLeft.castShadow=true;doorLeft.userData.closedX=-2.2;doorLeft.userData.openOffset=-2.1;
+  scene3.add(doorLeft);
+  doorRight=new THREE.Mesh(new THREE.BoxGeometry(4.4,5.0,0.25),doorMat);
+  doorRight.position.set(2.2,2.5,16);doorRight.castShadow=true;doorRight.userData.closedX=2.2;doorRight.userData.openOffset=2.1;
+  scene3.add(doorRight);
+  // Door handles
+  var handleMat=new THREE.MeshStandardMaterial({color:0xD4AF37,metalness:0.8,roughness:0.25});
+  var hl=new THREE.Mesh(new THREE.SphereGeometry(0.12,8,8),handleMat);hl.position.set(-0.3,2.5,0.18);doorLeft.add(hl);
+  var hr=new THREE.Mesh(new THREE.SphereGeometry(0.12,8,8),handleMat);hr.position.set(0.3,2.5,0.18);doorRight.add(hr);
+  doorOpenState=0;
+
+  // --- Roof (pitched look via two angled boxes + ridge, plus flat overhang) ---
+  bx(34,0.4,34,0xA8472E,0,H,0,roofMat);
+  var roofL=bx(18,0.4,34,0xA8472E,-8.3,H+1.0,0,roofMat); roofL.rotation.z=0.28;
+  var roofR=bx(18,0.4,34,0xA8472E,8.3,H+1.0,0,roofMat); roofR.rotation.z=-0.28;
+  bx(34,0.5,0.5,0xC0613E,0,H+2.5,0); // ridge
+
+  // --- Interior dividing walls WITH doorway gaps (corridors connect rooms) ---
+  // Spa room wall (x=-6 divider), gap at z: -6..-2 for doorway
+  bx(T,H,6,0xF5EBD8,-6,0,-13,wallMatInner,true);   // segment north of doorway
+  bx(T,H,6,0xF5EBD8,-6,0,-3,wallMatInner,true);    // segment south of doorway
+  bx(1.6,1.4,T,0xF5EBD8,-6,H-0.7,-8,wallMatInner); // lintel above doorway gap
+
+  // Bar room wall (x=6 divider), gap at z: -6..-2 for doorway
+  bx(T,H,6,0xF5EBD8,6,0,-13,wallMatInner,true);
+  bx(T,H,6,0xF5EBD8,6,0,-3,wallMatInner,true);
+  bx(1.6,1.4,T,0xF5EBD8,6,H-0.7,-8,wallMatInner);
+
+  // Throne room wall (z=-6 divider), gap at x: -2..2 for doorway
+  bx(4,H,T,0xF5EBD8,-8,0,-6,wallMatInner,true);
+  bx(4,H,T,0xF5EBD8,8,0,-6,wallMatInner,true);
+  bx(4,1.4,T,0xF5EBD8,0,H-0.7,-6,wallMatInner);
+
+  // --- Decorative interior furnishing ---
+  // Lobby reception desk
+  bx(5,1.1,1.4,0x8B5A2B,0,0,7,texMat(makeTexture('deskwood',texWood,3,1)));
+  bx(0.2,1.6,1.4,0xD4AF37,0,1.1,7); // little sign post
+  // Lobby seating
+  bx(2,0.5,1,0xB23A55,-6,0,8);bx(2,0.5,1,0xB23A55,6,0,8);
+  // Spa elements
+  bx(3,0.4,2,0x88D8C0,-11,0,-12); // massage table
+  bx(2,1.4,2,0xAEEAD8,-13,0,-6);  // spa shelf
+  // Bar counter
+  bx(6,1.2,1.3,0x6B4226,11,0,-11,texMat(makeTexture('barwood',texWood,4,1)));
+  for(var bi=0;bi<3;bi++){bx(0.4,1,0.4,0x3A2A1A,9+bi*1.5,0,-13);} // bar stools (legs simplified)
+  // Koninklijke Suite decor: luxurious bed + golden armchair
+  var bedFrameMat=new THREE.MeshStandardMaterial({color:0xD4AF37,metalness:0.5,roughness:0.35});
+  bx(4.2,0.7,3,0xFFFFFF,-1,0,-13,bedFrameMat);          // bed frame
+  bx(3.8,0.5,2.6,0xFFFFFF,-1,0.7,-13);                  // mattress/blanket
+  bx(4.2,1.1,0.3,0xD4AF37,-1,1.0,-14.4,bedFrameMat);    // headboard
+  var chairMat=new THREE.MeshStandardMaterial({color:0xFFD700,metalness:0.6,roughness:0.3});
+  bx(1.6,2.2,1.4,0xFFD700,2.8,0,-12,chairMat);          // golden armchair
+  bx(1.6,0.3,1.4,0xCC0000,2.8,2.2,-12);                 // chair cushion top
+
+  // --- Windows (emissive glow panels on outer walls for realism) ---
+  var winMat=new THREE.MeshStandardMaterial({color:0xBEE7FF,emissive:0x99CFFF,emissiveIntensity:0.25,transparent:true,opacity:0.75,roughness:0.1,metalness:0.3});
+  for(var wx=-12;wx<=12;wx+=8){ if(Math.abs(wx)>2) bx(2.2,2,0.15,0xBEE7FF,wx,2.2,-16.2,winMat); }
+  bx(0.15,2,2.2,0xBEE7FF,-16.2,2.2,-10,winMat);
+  bx(0.15,2,2.2,0xBEE7FF,16.2,2.2,-10,winMat);
+  bx(0.15,2,2.2,0xBEE7FF,-16.2,2.2,8,winMat);
+  bx(0.15,2,2.2,0xBEE7FF,16.2,2.2,8,winMat);
+
+  // --- Hotel sign above entrance ---
+  var signMat=new THREE.MeshStandardMaterial({color:0xFF1493,emissive:0xFF1493,emissiveIntensity:0.4,roughness:0.4});
+  bx(9,1.3,0.3,0xFF1493,0,H+0.3,16.3,signMat);
+}
+
+function buildOutdoorArea(){
+  // Palm trees scattered around, away from building footprint
+  addPalm(22,28);addPalm(-22,28);addPalm(30,8);addPalm(-30,8);addPalm(8,44);addPalm(-8,44);addPalm(34,20);
+  addPalm(-12,24);addPalm(12,24);
+
+  // Beach umbrellas + loungers
+  for(var ii=-2;ii<=2;ii++){addBeachUmbrella(ii*9,32);}
+
+  // Stage structure (outdoor, west of pool)
+  bx(11,0.7,7,0xFFB830,-24,0,14);
+  bx(13,5.5,0.4,0xCC0066,-24,3.5,10.6);
+  var stageLightMat=new THREE.MeshStandardMaterial({color:0xFFD700,emissive:0xFFD700,emissiveIntensity:0.5});
+  bx(0.3,0.3,0.3,0xFFD700,-28,5.8,11,stageLightMat);
+  bx(0.3,0.3,0.3,0xFFD700,-20,5.8,11,stageLightMat);
+
+  // Entrance path decor (small fountain, placed outside the door)
+  bx(2.5,0.6,2.5,0xE8E4D8,0,0,20,texMat(makeTexture('fountainstone',texMarble,3,3)));
+  var fountainWaterMat=texMat(makeTexture('fountainwater',texPoolWater,2,2),{roughness:0.1,metalness:0.4,transparent:true,opacity:0.9});
+  fl(1.8,1.8,0x3FC1E0,0,20,0.62,fountainWaterMat);
+}
+
+function addPalm(x,z){
+  bx(0.35,5.5,0.35,0x8B6914,x,0,z,texMat(makeTexture('palmtrunk',texWood,1,3)));
+  var leafMat=new THREE.MeshStandardMaterial({color:0x2D8A2D,roughness:0.8,side:THREE.DoubleSide});
+  for(var i=0;i<7;i++){
+    var a=(i/7)*Math.PI*2;
+    var leaf=new THREE.Mesh(new THREE.ConeGeometry(0.35,2.6,4),leafMat);
+    leaf.position.set(x+Math.cos(a)*1.0,6.0,z+Math.sin(a)*1.0);
+    leaf.rotation.x=Math.PI/2.1;leaf.rotation.z=a;
+    leaf.castShadow=true;scene3.add(leaf);
+  }
+  bx(0.45,0.5,0.45,0x6B3A1F,x,5.5,z);
+}
+
+function addBeachUmbrella(x,z){
+  bx(0.12,2.2,0.12,0xEEEEEE,x,0,z);
+  var umbMat=new THREE.MeshStandardMaterial({color:[0xFF5757,0xFFD700,0x06d6a0,0x00B4D8][Math.floor(Math.random()*4)],roughness:0.7,side:THREE.DoubleSide});
+  var top=new THREE.Mesh(new THREE.ConeGeometry(1.6,0.9,10),umbMat);
+  top.position.set(x,2.2,z);top.castShadow=true;scene3.add(top);
+  bx(1.8,0.25,0.6,0xF5EBD8,x,0,z+1.4); // lounger
+}
+
+function buildZones(map){
+  zoneMeshes=[];
+  Object.keys(ZONES).forEach(function(key){
+    var def=ZONES[key];if(def.map!==map)return;
+    var ringHeight=def.indoor?0.04:0.1;
+    var geo=new THREE.CylinderGeometry(def.r||3,def.r||3,ringHeight,20);
+    var mat=new THREE.MeshStandardMaterial({color:def.col,transparent:true,opacity:0.38,emissive:def.col,emissiveIntensity:0.25,roughness:0.6});
+    var mesh=new THREE.Mesh(geo,mat);mesh.position.set(def.x,ringHeight/2+0.01,def.z);mesh.userData.key=key;mesh.receiveShadow=false;scene3.add(mesh);zoneMeshes.push(mesh);
+    var cv=document.createElement('canvas');cv.width=256;cv.height=64;
+    var ctx=cv.getContext('2d');ctx.font='bold 18px Segoe UI';ctx.fillStyle='rgba(255,255,255,.95)';ctx.textAlign='center';ctx.fillText(def.lbl,128,40);
+    var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),transparent:true}));
+    sp.position.set(def.x,(def.indoor?3.2:3.6),def.z);sp.scale.set(7,1.75,1);scene3.add(sp);
+  });
+}
+
+// r128-safe "capsule" helper: cylinder body + two sphere caps, grouped as one object
+function makeCapsule(radius,length,mat){
+  var g=new THREE.Group();
+  var cyl=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,length,10),mat);
+  g.add(cyl);
+  var capTop=new THREE.Mesh(new THREE.SphereGeometry(radius,10,8),mat);
+  capTop.position.y=length/2;g.add(capTop);
+  var capBot=new THREE.Mesh(new THREE.SphereGeometry(radius,10,8),mat);
+  capBot.position.y=-length/2;g.add(capBot);
+  g.traverse(function(o){if(o.isMesh)o.castShadow=true;});
+  return g;
+}
+
+function buildChar(bc,hc,hair,acc){
+  var g=new THREE.Group();
+  var bm=new THREE.MeshStandardMaterial({color:bc,roughness:0.75,metalness:0.05});
+  var hm=new THREE.MeshStandardMaterial({color:hc,roughness:0.7,metalness:0.02});
+  var hm2=new THREE.MeshStandardMaterial({color:hair,roughness:0.85});
+  var blk=new THREE.MeshStandardMaterial({color:0x222222,roughness:0.6});
+  var shoeMat=new THREE.MeshStandardMaterial({color:0x222222,roughness:0.5,metalness:0.1});
+
+  // Legs: rounded capsule shapes instead of boxes
+  var ll=makeCapsule(0.13,0.42,bm);ll.position.set(-0.16,-0.42,0);g.add(ll);
+  var rl=makeCapsule(0.13,0.42,bm);rl.position.set(0.16,-0.42,0);g.add(rl);
+
+  // Shoes: rounded (sphere-ish squashed)
+  var shoeGeo=new THREE.SphereGeometry(0.16,10,8);
+  var sll=new THREE.Mesh(shoeGeo,shoeMat);sll.position.set(-0.16,-0.74,0.06);sll.scale.set(1,0.7,1.5);sll.castShadow=true;g.add(sll);
+  var srl=new THREE.Mesh(shoeGeo,shoeMat);srl.position.set(0.16,-0.74,0.06);srl.scale.set(1,0.7,1.5);srl.castShadow=true;g.add(srl);
+
+  // Body/torso: rounded capsule shape, slightly flattened front-to-back
+  var body=makeCapsule(0.34,0.32,bm);body.position.y=0.08;body.scale.set(1,1,0.78);g.add(body);
+
+  // Arms: capsules
+  var la=makeCapsule(0.1,0.38,bm);la.position.set(-0.45,0.08,0);g.add(la);
+  var ra=makeCapsule(0.1,0.38,bm);ra.position.set(0.45,0.08,0);g.add(ra);
+  // Hands
+  var handGeo=new THREE.SphereGeometry(0.09,8,8);
+  var lh=new THREE.Mesh(handGeo,hm);lh.position.set(-0.45,-0.18,0);g.add(lh);
+  var rh=new THREE.Mesh(handGeo,hm);rh.position.set(0.45,-0.18,0);g.add(rh);
+
+  // Neck
+  var neck=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.11,0.14,8),hm);neck.position.y=0.51;g.add(neck);
+
+  // Head: smooth sphere instead of box
+  var head=new THREE.Mesh(new THREE.SphereGeometry(0.29,16,14),hm);head.position.y=0.84;head.castShadow=true;g.add(head);
+
+  // Eyes: small rounded
+  var eyeGeo=new THREE.SphereGeometry(0.045,8,8);
+  var el2=new THREE.Mesh(eyeGeo,blk);el2.position.set(-0.12,0.87,0.25);g.add(el2);
+  var er=new THREE.Mesh(eyeGeo,blk);er.position.set(0.12,0.87,0.25);g.add(er);
+
+  // Mouth: small rounded sphere squashed flat (avoids unsupported capsule)
+  var mouthMat=new THREE.MeshStandardMaterial({color:0x7A3030,roughness:0.6});
+  var mouth=new THREE.Mesh(new THREE.SphereGeometry(0.06,8,6),mouthMat);
+  mouth.scale.set(1.6,0.5,0.4);mouth.position.set(0,0.74,0.27);g.add(mouth);
+
+  // Hair: rounded cap shape (half-sphere on top of head)
+  var hairGeo=new THREE.SphereGeometry(0.31,14,10,0,Math.PI*2,0,Math.PI*0.58);
+  var hairm=new THREE.Mesh(hairGeo,hm2);hairm.position.set(0,0.88,0);hairm.castShadow=true;g.add(hairm);
+
+  if(acc==='glasses'){
+    var gm=new THREE.MeshStandardMaterial({color:0x111111,roughness:0.3,metalness:0.4});
+    var gbar=new THREE.Mesh(new THREE.CylinderGeometry(0.015,0.015,0.36,6),gm);gbar.rotation.z=Math.PI/2;gbar.position.set(0,0.87,0.27);g.add(gbar);
+    var glaGeo=new THREE.TorusGeometry(0.085,0.018,6,12);
+    var gla=new THREE.Mesh(glaGeo,gm);gla.position.set(-0.13,0.87,0.26);g.add(gla);
+    var gra=new THREE.Mesh(glaGeo,gm);gra.position.set(0.13,0.87,0.26);g.add(gra);
+  } else if(acc==='crown'){
+    var cm=new THREE.MeshStandardMaterial({color:0xFFD700,metalness:0.7,roughness:0.25});
+    var cbase=new THREE.Mesh(new THREE.CylinderGeometry(0.27,0.3,0.22,12),cm);cbase.position.set(0,1.18,0);g.add(cbase);
+    for(var ci=0;ci<5;ci++){var pa=(ci/5)*Math.PI*2;var pt=new THREE.Mesh(new THREE.ConeGeometry(0.045,0.18,6),cm);pt.position.set(Math.cos(pa)*0.22,1.36,Math.sin(pa)*0.22);g.add(pt);}
+    var jewel=new THREE.Mesh(new THREE.SphereGeometry(0.06,8,8),new THREE.MeshStandardMaterial({color:0xFF0000,roughness:0.2,metalness:0.3}));jewel.position.set(0,1.38,0.24);g.add(jewel);
+  } else if(acc==='mic'){
+    var mm=new THREE.MeshStandardMaterial({color:0x333333,roughness:0.4,metalness:0.3});
+    var stick=makeCapsule(0.035,0.36,mm);stick.position.set(0.5,0.14,0.2);stick.rotation.z=0.4;g.add(stick);
+    var mhead=new THREE.Mesh(new THREE.SphereGeometry(0.09,10,10),mm);mhead.position.set(0.6,0.4,0.24);g.add(mhead);
+  }
+  g.position.y=0.72;return g;
+}
+
+function spawnPlayer(){
+  if(playerMesh){scene3.remove(playerMesh);playerMesh=null;}
+  if(!myRole&&!isHost)return;
+  playerMesh=buildChar(myRole?myRole.bc:0xffffff,myRole?myRole.hc:0xFFCBA4,myRole?myRole.hair:0x333333,myRole?myRole.acc:'none');
+  playerMesh.position.set(0,0,5);scene3.add(playerMesh);
+  // Own name label
+  if(myRole){
+    if(ownLabel){scene3.remove(ownLabel);}
+    ownLabel=makeNameLabel(myRole.name,myRole.emoji);
+    ownLabel.position.set(0,3.2,5);
+    scene3.add(ownLabel);
+  }
+  if('ontouchstart' in window){document.getElementById('joy').style.display='block';document.getElementById('eBnt').style.display='block';}
+}
+
+function setupKeys(){document.addEventListener('keydown',function(e){keys[e.key]=true;if(e.key==='e'||e.key==='E')doInteract();});document.addEventListener('keyup',function(e){keys[e.key]=false;});}
+function setupJoy(){
+  var base=document.getElementById('joyBase'),knob=document.getElementById('joyKnob'),max=28;
+  function mv(cx,cy){var r=base.getBoundingClientRect();var dx=cx-r.left-r.width/2,dy=cy-r.top-r.height/2,dist=Math.sqrt(dx*dx+dy*dy);if(dist>max){dx=dx/dist*max;dy=dy/dist*max;}joyDx=dx/max;joyDy=dy/max;knob.style.transform='translate(calc(-50% + '+dx+'px),calc(-50% + '+dy+'px))';}
+  function rs(){joyActive=false;joyDx=0;joyDy=0;knob.style.transform='translate(-50%,-50%)';}
+  base.addEventListener('touchstart',function(e){joyActive=true;mv(e.touches[0].clientX,e.touches[0].clientY);},{passive:true});
+  base.addEventListener('touchmove',function(e){mv(e.touches[0].clientX,e.touches[0].clientY);},{passive:true});
+  base.addEventListener('touchend',rs);
+}
+
+function animate(){
+  requestAnimationFrame(animate);
+  var dt=Math.min(clock3.getDelta(),0.05);
+  if(playerMesh){movePlayer(dt);if(!myDone)checkZones();followCam();}
+  animZones();animSea();animDoor();animLabels();drawMinimap();renderer.render(scene3,camera);
+  posTimer+=dt;
+  if(posTimer>0.5&&playerMesh&&gameCode&&myRole){
+    posTimer=0;
+    getState(gameCode,function(st){
+      if(!st)return;
+      st.positions=st.positions||{};
+      st.positions[myRole.id]={x:playerMesh.position.x,z:playerMesh.position.z,bc:myRole.bc,hc:myRole.hc,hair:myRole.hair,acc:myRole.acc,name:myRole.name,emoji:myRole.emoji};
+      setState(gameCode,st);
+    });
+  }
+}
+
+function animSea(){
+  if(seaMesh&&seaMesh.material&&seaMesh.material.map){
+    seaMesh.material.map.offset.x=Date.now()*0.00002;
+    seaMesh.material.map.offset.y=Date.now()*0.00001;
+  }
+}
+
+function animDoor(){
+  if(!doorLeft||!doorRight||!playerMesh)return;
+  var dx=playerMesh.position.x,dz=playerMesh.position.z;
+  var distToDoor=Math.sqrt(dx*dx+Math.pow(dz-16,2));
+  var wantOpen=distToDoor<6;
+  var target=wantOpen?1:0;
+  doorOpenState+=(target-doorOpenState)*0.08;
+  doorLeft.position.x=doorLeft.userData.closedX+doorLeft.userData.openOffset*doorOpenState;
+  doorRight.position.x=doorRight.userData.closedX+doorRight.userData.openOffset*doorOpenState;
+}
+
+var SPEED=7;
+function checkWallCollision(x,z){
+  // Returns true if position (x,z) collides with any registered wall
+  for(var i=0;i<WALL_COLLIDERS.length;i++){
+    var c=WALL_COLLIDERS[i];
+    if(x>c.minX&&x<c.maxX&&z>c.minZ&&z<c.maxZ)return true;
+  }
+  // Door collision (only when mostly closed)
+  if(doorLeft&&doorRight&&doorOpenState<0.5){
+    if(z>15.3&&z<16.7&&x>-4.6&&x<4.6)return true;
+  }
+  return false;
+}
+
+function movePlayer(dt){
+  var dx=0,dz=0;
+  if(keys['ArrowUp']||keys['w']||keys['W'])dz-=1;
+  if(keys['ArrowDown']||keys['s']||keys['S'])dz+=1;
+  if(keys['ArrowLeft']||keys['a']||keys['A'])camYaw+=dt*1.8;
+  if(keys['ArrowRight']||keys['d']||keys['D'])camYaw-=dt*1.8;
+  if(joyActive){dx+=joyDx;dz+=joyDy;}
+  if(dx!==0||dz!==0){
+    var fw=new THREE.Vector3(-Math.sin(camYaw),0,-Math.cos(camYaw));
+    var rt=new THREE.Vector3(Math.cos(camYaw),0,-Math.sin(camYaw));
+    var mv=fw.clone().multiplyScalar(-dz).add(rt.clone().multiplyScalar(dx));
+    mv.normalize().multiplyScalar(SPEED*dt);
+    var curMap=SCENES[curSceneIdx]?SCENES[curSceneIdx].map:'resort';
+    var curX=playerMesh.position.x,curZ=playerMesh.position.z;
+    var tryX=curX+mv.x,tryZ=curZ+mv.z;
+    if(curMap==='resort'){
+      // Circular island boundary (sand ring outer radius ~50, keep player on land)
+      var dist=Math.sqrt(tryX*tryX+tryZ*tryZ);
+      if(dist>50){var scale=50/dist;tryX*=scale;tryZ*=scale;}
+    } else {
+      tryX=Math.max(-22,Math.min(22,tryX));
+      tryZ=Math.max(-15.5,Math.min(15.5,tryZ));
+    }
+    // Wall collision with sliding: test each axis independently
+    var finalX=curX,finalZ=curZ;
+    if(!checkWallCollision(tryX,curZ))finalX=tryX;
+    if(!checkWallCollision(finalX,tryZ))finalZ=tryZ;
+    playerMesh.position.x=finalX;
+    playerMesh.position.z=finalZ;
+    if(mv.length()>0.001)playerMesh.rotation.y=Math.atan2(mv.x,mv.z);
+    playerMesh.position.y=0.72+Math.abs(Math.sin(Date.now()*0.009))*0.07;
+  }
+}
+function followCam(){
+  var ox=Math.sin(camYaw)*7,oz=Math.cos(camYaw)*7;
+  camera.position.lerp(new THREE.Vector3(playerMesh.position.x+ox,playerMesh.position.y+4.5,playerMesh.position.z+oz),0.1);
+  camera.lookAt(playerMesh.position.clone().add(new THREE.Vector3(0,1.2,0)));
+}
+
+function checkZones(){
+  if(!myRole)return;
+  nearZone=null;
+  var px=playerMesh.position.x,pz=playerMesh.position.z;
+  zoneMeshes.forEach(function(zm){var def=ZONES[zm.userData.key];if(!def)return;if(Math.sqrt(Math.pow(px-def.x,2)+Math.pow(pz-def.z,2))<(def.r||3)+0.5)nearZone=zm.userData.key;});
+  var sc=SCENES[curSceneIdx],sd=myRole.sc[sc.id];
+  var tzone=sd?sd.z:null,dKey=sc.id+'_'+tzone;
+  var hint=document.getElementById('hint'),tbox=document.getElementById('taskBox');
+  if(nearZone&&nearZone===tzone&&!doneZones[dKey]){hint.classList.add('show');tbox.classList.remove('show');}
+  else if(nearZone){hint.classList.remove('show');var def=ZONES[nearZone];document.getElementById('tTitle').textContent=def?def.lbl:nearZone;document.getElementById('tDesc').textContent=sd?sd.t:'';tbox.classList.add('show');}
+  else{hint.classList.remove('show');tbox.classList.remove('show');}
+}
+
+function doInteract(){
+  if(!nearZone||!myRole||myDone)return;
+  var sc=SCENES[curSceneIdx],sd=myRole.sc[sc.id];
+  if(!sd||nearZone!==sd.z)return;
+  var dKey=sc.id+'_'+sd.z;if(doneZones[dKey])return;
+  doneZones[dKey]=true;myDone=true;
+  document.getElementById('doneTask').textContent=sd.t;
+  document.getElementById('doneOverlay').classList.add('show');
+  document.getElementById('hint').classList.remove('show');
+  document.getElementById('taskBox').classList.remove('show');
+  zoneMeshes.forEach(function(zm){if(zm.userData.key===nearZone)zm.material.color.set(0x06d6a0);});
+  // Write to separate player_done table - each player writes their OWN row
+  // No race condition possible because each player has a unique id as primary key
+  var doneId=gameCode+'_'+sc.id+'_'+myRole.id;
+  sbReq('POST','player_done',{id:doneId,game_code:gameCode,scene_id:sc.id,role_id:myRole.id})
+    .catch(function(e){console.log('done write err',e);});
+}
+
+var nameLabels={};
+
+function makeNameLabel(name,emoji){
+  var cv=document.createElement('canvas');cv.width=256;cv.height=56;
+  var ctx=cv.getContext('2d');
+  ctx.fillStyle='rgba(10,22,40,0.82)';
+  roundRect(ctx,4,4,248,48,12);ctx.fill();
+  ctx.font='bold 18px Segoe UI';ctx.fillStyle='#fff';ctx.textAlign='center';
+  ctx.fillText((emoji||'')+'  '+(name||''),128,32);
+  var tex=new THREE.CanvasTexture(cv);
+  var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}));
+  sp.scale.set(3.2,0.7,1);
+  return sp;
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+}
+
+function updateOther(id,pos){
+  if(!otherMeshes[id]){
+    var g=buildChar(pos.bc||0xaaaaaa,pos.hc||0xFFCBA4,pos.hair||0x333333,pos.acc||'none');
+    scene3.add(g);otherMeshes[id]=g;
+  }
+  otherMeshes[id].position.set(pos.x,0.72,pos.z);
+  // Name label above head - create or update
+  if(pos.name){
+    if(!nameLabels[id]){
+      var lbl=makeNameLabel(pos.name,pos.emoji);
+      scene3.add(lbl);nameLabels[id]=lbl;
+    }
+    nameLabels[id].position.set(pos.x,3.2,pos.z);
+    // Always face camera
+    nameLabels[id].material.rotation=0;
+  }
+}
+
+function animLabels(){
+  if(ownLabel&&playerMesh){
+    ownLabel.position.set(playerMesh.position.x,playerMesh.position.y+2.5,playerMesh.position.z);
+  }
+  Object.keys(nameLabels).forEach(function(id){
+    if(otherMeshes[id]){
+      var m=otherMeshes[id];
+      nameLabels[id].position.set(m.position.x,m.position.y+2.5,m.position.z);
+    }
+  });
+}
+
+function animZones(){var t=Date.now()*0.002;zoneMeshes.forEach(function(zm,i){zm.material.opacity=0.28+Math.sin(t+i*1.2)*0.14;zm.rotation.y+=0.005;});}
+
+function drawMinimap(){
+  var cv=document.getElementById('mmCanvas'),ctx=cv.getContext('2d'),W=85,H=85;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='rgba(8,18,40,.9)';ctx.fillRect(0,0,W,H);
+  zoneMeshes.forEach(function(zm){var def=ZONES[zm.userData.key];if(!def)return;var mx=(def.x+55)/110*W,mz=(def.z+55)/110*H;ctx.fillStyle='rgba(255,255,255,.2)';ctx.beginPath();ctx.arc(mx,mz,3,0,Math.PI*2);ctx.fill();});
+  Object.keys(otherMeshes).forEach(function(id){var m=otherMeshes[id];var mx=(m.position.x+55)/110*W,mz=(m.position.z+55)/110*H;ctx.fillStyle='#aaa';ctx.beginPath();ctx.arc(mx,mz,2.5,0,Math.PI*2);ctx.fill();});
+  if(playerMesh){var mx=(playerMesh.position.x+55)/110*W,mz=(playerMesh.position.z+55)/110*H;ctx.fillStyle=myRole?'#'+myRole.bc.toString(16).padStart(6,'0'):'#fff';ctx.beginPath();ctx.arc(mx,mz,4,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();}
+}
+
+function showAnnounce(idx){
+  var sc=SCENES[idx];
+  document.getElementById('saNum').textContent=sc.lbl;
+  document.getElementById('saName').textContent=sc.name;
+  document.getElementById('saDesc').textContent=sc.desc;
+  var taskEl=document.getElementById('saTask');
+  if(myRole&&myRole.sc[sc.id]){document.getElementById('saTaskText').textContent=myRole.sc[sc.id].t;taskEl.style.display='block';}
+  else taskEl.style.display='none';
+  document.getElementById('sceneAnnounce').classList.add('show');
+}
+function closeAnnounce(){document.getElementById('sceneAnnounce').classList.remove('show');}
+
+function changeScene(idx){
+  if(idx===curSceneIdx&&gameRunning)return;
+  curSceneIdx=idx;doneZones={};myDone=false;autoAdvanced=false;lastDoneCount=-1;
+  document.getElementById('doneOverlay').classList.remove('show');
+  var sc=SCENES[idx];
+  var fade=document.getElementById('fadeover');fade.classList.add('dark');
+  setTimeout(function(){
+    buildWorld(sc.map);buildZones(sc.map);
+    if(playerMesh){scene3.remove(playerMesh);playerMesh=null;spawnPlayer();}
+    document.getElementById('sceneLbl').textContent=sc.lbl+' — '+sc.name;
+    showAnnounce(idx);fade.classList.remove('dark');
+  },500);
+}
+</script>
+</body>
+</html>
